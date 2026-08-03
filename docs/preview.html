@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="vi" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DeciFin - toàn bộ màn hình</title>
+<link rel="stylesheet" href="../assets/styles.css">
+<style>
+  .preview-label { margin: 56px 0 18px; padding-top: 22px; border-top: 1px solid var(--line); }
+  .preview-label:first-of-type { border-top: 0; margin-top: 0; }
+</style>
+</head>
+<body>
+<main><div class="shell">
+  <p class="eyebrow" style="margin-top:40px">Trang rà soát thiết kế</p>
+  <h1 style="margin-top:10px">Sáu màn hình của DeciFin</h1>
+  <p class="lede" style="margin-top:12px">
+    Trang này được sinh tự động từ chính mã giao diện của ứng dụng, nên nó luôn khớp với sản phẩm.
+    Dùng để chụp ảnh minh hoạ và để rà soát thiết kế. Sinh lại bằng lệnh <code>node tools/build_preview.js</code>.
+  </p>
+  
+  <h2 class="preview-label">1. Trang chào</h2>
+  
+<section class="view stack">
+  <div>
+    <p class="eyebrow">Công cụ trước khi quyết định</p>
+    <h1 style="margin-top:10px;max-width:19ch">Nhìn thấy hệ quả trước khi tiêu tiền.</h1>
+    <p class="lede" style="margin-top:14px">
+      Ứng dụng ghi chép cho bạn biết đã tiêu bao nhiêu. DeciFin cho bạn biết nếu chọn phương án này
+      thì quỹ dự phòng còn lại bao nhiêu, mục tiêu bị đẩy lùi bao lâu, và gói trả góp kia thật ra
+      đang tính lãi bao nhiêu.
+    </p>
+    <div class="row" style="margin-top:24px">
+      <button class="btn" data-action="start-blank">
+        Tạo hồ sơ của tôi <span class="btn__pip" aria-hidden="true">↗</span>
+      </button>
+      <button class="btn btn--ghost" data-action="go" data-view="assumptions">Xem giả định của mô hình</button>
+    </div>
+  </div>
+
+  <div class="shell-card rise" style="animation-delay:.08s">
+    <div class="shell-card__core">
+      <div class="spread">
+        <h2>Hoặc mở một hồ sơ mẫu</h2>
+        <span class="small muted">Dữ liệu dựng sẵn, xem kết quả ngay</span>
+      </div>
+      <div class="grid-3" style="margin-top:18px">
+        
+        <button class="panel rise" data-action="preset" data-id="sinh-vien"
+                style="text-align:left;cursor:pointer;animation-delay:0.12s">
+          <h3>Sinh viên năm cuối</h3>
+          <p class="small muted" style="margin-top:6px">Làm thêm 6 triệu, ở ghép, chưa có nợ</p>
+          <span class="small" style="display:inline-block;margin-top:12px">Mở hồ sơ này ↗</span>
+        </button>
+        <button class="panel rise" data-action="preset" data-id="moi-di-lam"
+                style="text-align:left;cursor:pointer;animation-delay:0.18s">
+          <h3>Người mới đi làm</h3>
+          <p class="small muted" style="margin-top:6px">Thu nhập 12 triệu tại TP.HCM, chưa có nợ</p>
+          <span class="small" style="display:inline-block;margin-top:12px">Mở hồ sơ này ↗</span>
+        </button>
+        <button class="panel rise" data-action="preset" data-id="di-lam-hai-nam"
+                style="text-align:left;cursor:pointer;animation-delay:0.24s">
+          <h3>Đi làm hai năm, đang trả nợ</h3>
+          <p class="small muted" style="margin-top:6px">Thu nhập 18 triệu, còn khoản vay xe 3,2 triệu mỗi tháng</p>
+          <span class="small" style="display:inline-block;margin-top:12px">Mở hồ sơ này ↗</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <p class="small muted" style="max-width:70ch">
+    Toàn bộ tính toán chạy trên thiết bị của bạn. Ứng dụng không có máy chủ và không gửi số liệu
+    tài chính của bạn đi đâu cả.
+  </p>
+</section>
+  <h2 class="preview-label">2. Tạo hồ sơ</h2>
+  
+<section class="view stack">
+  <div>
+    <p class="eyebrow">Bước 1 trên 4</p>
+    <h1 style="margin-top:8px">Thu nhập và chi phí</h1>
+  </div>
+
+  <div class="shell-card">
+    <div class="shell-card__core">
+      <div class="grid-2">
+    
+<div class="field">
+  <label for="f-income">Thu nhập ròng mỗi tháng</label>
+  <input class="input" id="f-income" name="income" type="number" min="0" step="100000" value="12000000" inputmode="numeric">
+  <span class="hint">Số tiền thực nhận sau thuế và bảo hiểm</span>
+</div>
+    
+<div class="field">
+  <label for="f-essential">Chi phí thiết yếu mỗi tháng</label>
+  <input class="input" id="f-essential" name="essential" type="number" min="0" step="100000" value="6500000" inputmode="numeric">
+  <span class="hint">Thuê nhà, ăn uống, đi lại, điện nước, y tế</span>
+</div>
+    
+<div class="field">
+  <label for="f-discretionary">Chi tiêu linh hoạt mỗi tháng</label>
+  <input class="input" id="f-discretionary" name="discretionary" type="number" min="0" step="100000" value="2000000" inputmode="numeric">
+  <span class="hint">Giải trí, mua sắm không bắt buộc</span>
+</div>
+  </div>
+  <p class="small muted" style="margin-top:16px">
+    Chi phí thiết yếu và chi tiêu linh hoạt được tách riêng vì khi mất thu nhập, người ta cắt ngay
+    khoản linh hoạt nhưng vẫn phải trả khoản thiết yếu. Quỹ dự phòng chỉ tính trên phần thiết yếu.
+  </p>
+    </div>
+  </div>
+
+  <div class="row row--end">
+    
+    <button class="btn" data-action="wizard-next">
+      Tiếp tục
+      <span class="btn__pip" aria-hidden="true">→</span>
+    </button>
+  </div>
+</section>
+  <h2 class="preview-label">3. Bảng chỉ số</h2>
+  
+<section class="view stack">
+  <div class="spread">
+    <div>
+      <p class="eyebrow">Hồ sơ tài chính</p>
+      <h1 style="margin-top:8px">Bức tranh hiện tại của bạn</h1>
+    </div>
+    <button class="btn btn--ghost" data-action="go" data-view="profile">Sửa hồ sơ</button>
+  </div>
+
+  <div class="metrics">
+    <div class="metric rise">
+    <div class="metric__label">Dòng tiền dư mỗi tháng</div>
+    <div class="metric__value figure t-safe">3.500.000 đ</div>
+    <div class="metric__note muted">Tỷ lệ tiết kiệm 29,2%</div>
+  </div>
+    <div class="metric rise">
+    <div class="metric__label">Quỹ dự phòng</div>
+    <div class="metric__value figure t-caution">3,8 tháng</div>
+    <div class="metric__note muted">Chưa đạt mức an toàn 6 tháng</div>
+  </div>
+    <div class="metric rise">
+    <div class="metric__label">Nghĩa vụ nợ</div>
+    <div class="metric__value figure t-safe">0,0%</div>
+    <div class="metric__note muted">Chưa có khoản vay nào</div>
+  </div>
+    <div class="metric rise">
+    <div class="metric__label">Chi phí tối thiểu</div>
+    <div class="metric__value figure t-ink">6.500.000 đ</div>
+    <div class="metric__note muted">Mức cần để duy trì cuộc sống</div>
+  </div>
+  </div>
+
+  
+  <div class="shell-card">
+    <div class="shell-card__core">
+      <div class="spread">
+        <h2>Đường tới mục tiêu nếu giữ nguyên nhịp hiện tại</h2>
+      </div>
+      <div style="margin-top:16px"><svg class="chart" viewBox="0 0 720 240" role="img" preserveAspectRatio="xMidYMid meet">
+<title>Quỹ dự phòng 6 tháng, Học chứng chỉ nghề</title>
+<line class="axis" x1="46" y1="214.0" x2="704" y2="214.0" opacity="0.6"/>
+<text x="38" y="214.0" text-anchor="end" dominant-baseline="middle">0</text><line class="axis" x1="46" y1="115.0" x2="704" y2="115.0" opacity="0.6"/>
+<text x="38" y="115.0" text-anchor="end" dominant-baseline="middle">40,3 tr</text><line class="axis" x1="46" y1="16.0" x2="704" y2="16.0" opacity="0.6"/>
+<text x="38" y="16.0" text-anchor="end" dominant-baseline="middle">80,5 tr</text><path class="series series--animated" d="M46.0,152.5 L73.4,147.1 L100.8,141.7 L128.3,136.2 L155.7,130.7 L183.1,125.2 L210.5,119.7 L237.9,114.1 L265.3,108.5 L292.8,102.9 L320.2,97.3 L347.6,91.6 L375.0,86.0 L402.4,80.3 L429.8,74.5 L457.3,68.8 L484.7,63.0 L512.1,57.2 L539.5,51.4 L566.9,45.6 L594.3,39.7 L621.8,33.8 L649.2,27.9 L676.6,22.0 L704.0,16.0" stroke="var(--ink)" style="--len:672"/><path class="series series--animated" d="M46.0,209.1 L73.4,205.6 L100.8,202.1 L128.3,198.6 L155.7,195.1 L183.1,191.6 L210.5,188.1 L237.9,184.5 L265.3,181.0 L292.8,177.4 L320.2,173.8 L347.6,170.2 L375.0,166.6 L402.4,162.9 L429.8,159.3 L457.3,155.6 L484.7,151.9 L512.1,148.2 L539.5,144.5 L566.9,140.8 L594.3,137.0 L621.8,133.2 L649.2,129.5 L676.6,125.7 L704.0,121.9" stroke="var(--caution)" style="--len:664"/><text x="46.0" y="232" text-anchor="start">tháng 0</text><text x="375.0" y="232" text-anchor="middle">tháng 12</text><text x="704.0" y="232" text-anchor="end">tháng 24</text>
+</svg></div>
+      <div class="row small" style="margin-top:10px"><span class="row" style="gap:6px"><span style="width:14px;height:2px;border-radius:2px;background:var(--ink)"></span>Quỹ dự phòng 6 tháng</span><span class="row" style="gap:6px"><span style="width:14px;height:2px;border-radius:2px;background:var(--caution)"></span>Học chứng chỉ nghề</span></div>
+      <div class="rows" style="margin-top:18px">
+        <div class="rows__item spread">
+            <div>
+              <strong>Quỹ dự phòng 6 tháng</strong>
+              <p class="small muted" style="margin-top:2px">
+                Cần 39,0 tr, đã có 25,0 tr, nhận 60% dòng tiền dư
+              </p>
+            </div>
+            <div style="text-align:right">
+              <div class="figure" style="font-weight:600">7 tháng</div>
+              <span class="chip chip--safe" style="margin-top:4px">
+                Kịp hạn
+              </span>
+            </div>
+          </div><div class="rows__item spread">
+            <div>
+              <strong>Học chứng chỉ nghề</strong>
+              <p class="small muted" style="margin-top:2px">
+                Cần 20,0 tr, đã có 2,0 tr, nhận 40% dòng tiền dư
+              </p>
+            </div>
+            <div style="text-align:right">
+              <div class="figure" style="font-weight:600">13 tháng</div>
+              <span class="chip chip--caution" style="margin-top:4px">
+                Trễ hạn 12 tháng
+              </span>
+            </div>
+          </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <h2>Bạn đang cân nhắc quyết định nào</h2>
+    <div class="grid-2" style="margin-top:16px">
+      
+      <button class="panel rise" data-action="pick-decision" data-kind="purchase"
+              style="text-align:left;cursor:pointer;animation-delay:0s">
+        <h3>Mua sắm giá trị lớn</h3>
+        <p class="small muted" style="margin-top:6px">So sánh trả thẳng, trả góp và trì hoãn cho một khoản chi lớn.</p>
+        <span class="small" style="display:inline-block;margin-top:12px">Ví dụ: Mua laptop 25 triệu ↗</span>
+      </button>
+      <button class="panel rise" data-action="pick-decision" data-kind="installment"
+              style="text-align:left;cursor:pointer;animation-delay:0.05s">
+        <h3>Chọn gói trả góp</h3>
+        <p class="small muted" style="margin-top:6px">Đặt cạnh nhau nhiều gói trả góp và phơi bày lãi suất thực của từng gói.</p>
+        <span class="small" style="display:inline-block;margin-top:12px">Ví dụ: Gói 6 tháng so với gói 12 tháng ↗</span>
+      </button>
+      <button class="panel rise" data-action="pick-decision" data-kind="allocation"
+              style="text-align:left;cursor:pointer;animation-delay:0.1s">
+        <h3>Phân bổ giữa các mục tiêu</h3>
+        <p class="small muted" style="margin-top:6px">Thử các cách chia dòng tiền dư và xem mục tiêu nào về đích sớm hơn.</p>
+        <span class="small" style="display:inline-block;margin-top:12px">Ví dụ: Ưu tiên quỹ dự phòng hay ưu tiên đi học ↗</span>
+      </button>
+      <button class="panel rise" data-action="pick-decision" data-kind="savings"
+              style="text-align:left;cursor:pointer;animation-delay:0.15000000000000002s">
+        <h3>Điều chỉnh kế hoạch tiết kiệm</h3>
+        <p class="small muted" style="margin-top:6px">Xem việc tăng hoặc giảm mức tiết kiệm dịch chuyển các mục tiêu bao xa.</p>
+        <span class="small" style="display:inline-block;margin-top:12px">Ví dụ: Tiết kiệm thêm 1 triệu mỗi tháng ↗</span>
+      </button>
+    </div>
+  </div>
+</section>
+  <h2 class="preview-label">4. Nhập quyết định</h2>
+  
+<section class="view stack">
+  <div class="spread">
+    <div>
+      <p class="eyebrow">Mua sắm giá trị lớn</p>
+      <h1 style="margin-top:8px;max-width:22ch">Khoản chi này ảnh hưởng thế nào tới bạn</h1>
+    </div>
+    <button class="btn btn--ghost" data-action="go" data-view="dashboard">Đổi nhóm quyết định</button>
+  </div>
+
+  <div class="shell-card">
+    <div class="shell-card__core">
+      
+  <div class="grid-3">
+    
+<div class="field">
+  <label for="d-price">Giá món hàng</label>
+  <input class="input" id="d-price" name="price" type="number" min="0" step="1000000" value="25000000" inputmode="numeric">
+  
+</div>
+    
+<div class="field">
+  <label for="d-downPayment">Trả trước nếu chọn trả góp</label>
+  <input class="input" id="d-downPayment" name="downPayment" type="number" min="0" step="1000000" value="5000000" inputmode="numeric">
+  
+</div>
+    
+<div class="field">
+  <label for="d-months">Kỳ hạn trả góp (tháng)</label>
+  <input class="input" id="d-months" name="months" type="number" min="0" step="1" value="12" inputmode="numeric">
+  
+</div>
+    
+<div class="field">
+  <label for="d-flatRate">Lãi phẳng người bán báo (%/tháng)</label>
+  <input class="input" id="d-flatRate" name="flatRate" type="number" min="0" step="0.1" value="1" inputmode="numeric">
+  <span class="hint">Con số cửa hàng thường ghi trên bảng giá</span>
+</div>
+    
+<div class="field">
+  <label for="d-delayMonths">Nếu trì hoãn thì bao lâu (tháng)</label>
+  <input class="input" id="d-delayMonths" name="delayMonths" type="number" min="0" step="1" value="4" inputmode="numeric">
+  
+</div>
+  </div>
+  <p class="small muted" style="margin-top:16px">
+    Công cụ sẽ dựng ba phương án để so sánh: trả thẳng, trả góp và trì hoãn. Phương án trì hoãn
+    được tính cả phần giá tăng theo lạm phát trong thời gian chờ.
+  </p>
+    </div>
+  </div>
+
+  <div class="row row--end">
+    <button class="btn" data-action="simulate">
+      Mô phỏng các phương án <span class="btn__pip" aria-hidden="true">↗</span>
+    </button>
+  </div>
+</section>
+  <h2 class="preview-label">5. So sánh kết quả</h2>
+  
+<section class="view stack">
+  <div class="spread">
+    <div>
+      <p class="eyebrow">Kết quả mô phỏng</p>
+      <h1 style="margin-top:8px;max-width:24ch">Ba phương án, cùng một hồ sơ</h1>
+    </div>
+    <button class="btn btn--ghost" data-action="go" data-view="decision">Sửa phương án</button>
+  </div>
+
+  
+<div class="reveal-apr rise">
+  <div>
+    <div class="reveal-apr__k">Người bán quảng cáo</div>
+    <div class="reveal-apr__v figure muted">12,0%<span class="small">/năm</span></div>
+    <p class="small muted" style="margin-top:4px">Lãi phẳng 1,0% mỗi tháng, quy đổi thẳng ra năm</p>
+  </div>
+  <div class="reveal-apr__arrow" aria-hidden="true">→</div>
+  <div>
+    <div class="reveal-apr__k">Lãi suất thực bạn đang trả</div>
+    <div class="reveal-apr__v figure t-risky">21,46%<span class="small">/năm</span></div>
+    <p class="small" style="margin-top:4px">
+      Gấp <strong>1,79 lần</strong>, tức thêm 2.400.000 đ tiền lãi
+    </p>
+  </div>
+</div>
+
+  <div class="compare">
+    
+<article class="option option--top  rise"
+         style="animation-delay:0s">
+  <div class="option__core">
+    <div class="option__head">
+      <span class="option__rank">1</span>
+      <div>
+        <div class="option__title">Trì hoãn 4 tháng rồi mua</div>
+        <span class="chip chip--safe" style="margin-top:6px">An toàn</span>
+        
+      </div>
+      <div class="option__score">
+        <b class="figure t-safe">72,9</b>
+        <div class="small muted">điểm an toàn</div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="stat__k">Tổng tiền chi</div><div class="stat__v figure">25.335.004 đ</div></div>
+      <div class="stat"><div class="stat__k">Giá trị hiện tại</div><div class="stat__v figure">24.917.116 đ</div></div>
+      <div class="stat"><div class="stat__k">Quỹ dự phòng còn</div><div class="stat__v figure">2,2 tháng</div></div>
+      <div class="stat"><div class="stat__k">Nghĩa vụ nợ</div><div class="stat__v figure">0,0%</div></div>
+    </div>
+
+    
+    <div class="stats" style="margin-top:2px">
+      <div class="stat"><div class="stat__k">Quỹ dự phòng 6 tháng</div><div class="stat__v figure">7 tháng</div></div><div class="stat"><div class="stat__k">Học chứng chỉ nghề</div><div class="stat__v figure">13 tháng</div></div>
+    </div>
+
+    <ul class="notes">
+      
+      <li class="note note--warn">
+        <span class="note__dot" aria-hidden="true"></span>
+        <span>Quỹ dự phòng còn 2.2 tháng, dưới ngưỡng thận trọng 3 tháng.</span>
+      </li>
+    </ul>
+  </div>
+</article>
+<article class="option   rise"
+         style="animation-delay:0.09s">
+  <div class="option__core">
+    <div class="option__head">
+      <span class="option__rank">2</span>
+      <div>
+        <div class="option__title">Trả góp 12 tháng</div>
+        <span class="chip chip--caution" style="margin-top:6px">Cần thận trọng</span>
+        
+      </div>
+      <div class="option__score">
+        <b class="figure t-caution">64,5</b>
+        <div class="small muted">điểm an toàn</div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="stat__k">Tổng tiền chi</div><div class="stat__v figure">27.400.000 đ</div></div>
+      <div class="stat"><div class="stat__k">Giá trị hiện tại</div><div class="stat__v figure">26.804.948 đ</div></div>
+      <div class="stat"><div class="stat__k">Quỹ dự phòng còn</div><div class="stat__v figure">2,4 tháng</div></div>
+      <div class="stat"><div class="stat__k">Nghĩa vụ nợ</div><div class="stat__v figure">15,6%</div></div>
+    </div>
+
+    
+    <div class="stats" style="margin-top:2px">
+      <div class="stat"><div class="stat__k">Quỹ dự phòng 6 tháng</div><div class="stat__v figure">13 tháng (chậm 6)</div></div><div class="stat"><div class="stat__k">Học chứng chỉ nghề</div><div class="stat__v figure">26 tháng (chậm 13)</div></div>
+    </div>
+
+    <ul class="notes">
+      
+      <li class="note note--warn">
+        <span class="note__dot" aria-hidden="true"></span>
+        <span>Quỹ dự phòng còn 2.4 tháng, dưới ngưỡng thận trọng 3 tháng.</span>
+      </li>
+      <li class="note note--warn">
+        <span class="note__dot" aria-hidden="true"></span>
+        <span>Mục tiêu &quot;Học chứng chỉ nghề&quot; chậm thêm 13 tháng, dự kiến đạt sau 26 tháng và trễ hạn mong muốn.</span>
+      </li>
+      <li class="note note--warn">
+        <span class="note__dot" aria-hidden="true"></span>
+        <span>Lãi suất thực của gói trả góp là 21.46%/năm, trong khi mức quảng cáo quy đổi chỉ 12.0%/năm, gấp 1.79 lần.</span>
+      </li>
+      <li class="note note--note">
+        <span class="note__dot" aria-hidden="true"></span>
+        <span>Mục tiêu &quot;Quỹ dự phòng 6 tháng&quot; chậm thêm 6 tháng, dự kiến đạt sau 13 tháng.</span>
+      </li>
+    </ul>
+  </div>
+</article>
+<article class="option  option--blocked rise"
+         style="animation-delay:0.18s">
+  <div class="option__core">
+    <div class="option__head">
+      <span class="option__rank">3</span>
+      <div>
+        <div class="option__title">Trả thẳng toàn bộ</div>
+        <span class="chip chip--blocked" style="margin-top:6px">Không khuyến nghị</span>
+        <span class="chip" style="margin-top:6px;background:var(--surface-sunken);color:var(--muted)">Ít tiền mặt nhất</span>
+      </div>
+      <div class="option__score">
+        <b class="figure t-blocked">35,0</b>
+        <div class="small muted">điểm an toàn</div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="stat__k">Tổng tiền chi</div><div class="stat__v figure">25.000.000 đ</div></div>
+      <div class="stat"><div class="stat__k">Giá trị hiện tại</div><div class="stat__v figure">25.000.000 đ</div></div>
+      <div class="stat"><div class="stat__k">Quỹ dự phòng còn</div><div class="stat__v figure">0,0 tháng</div></div>
+      <div class="stat"><div class="stat__k">Nghĩa vụ nợ</div><div class="stat__v figure">0,0%</div></div>
+    </div>
+
+    
+    <div class="stats" style="margin-top:2px">
+      <div class="stat"><div class="stat__k">Quỹ dự phòng 6 tháng</div><div class="stat__v figure">7 tháng</div></div><div class="stat"><div class="stat__k">Học chứng chỉ nghề</div><div class="stat__v figure">13 tháng</div></div>
+    </div>
+
+    <ul class="notes">
+      
+      <li class="note note--block">
+        <span class="note__dot" aria-hidden="true"></span>
+        <span>Quỹ dự phòng chỉ còn 0.0 tháng, dưới mức tối thiểu để xử lý sự cố.</span>
+      </li>
+    </ul>
+  </div>
+</article>
+  </div>
+
+  <div class="shell-card">
+    <div class="shell-card__core">
+      <h2>Quỹ dự phòng trong 24 tháng tới</h2>
+      <p class="small muted" style="margin-top:6px">
+        Đường nét đứt là ngưỡng thận trọng 3 tháng.
+      </p>
+      <div style="margin-top:16px">
+        <svg class="chart" viewBox="0 0 720 240" role="img" preserveAspectRatio="xMidYMid meet">
+<title>Trì hoãn 4 tháng rồi mua, Trả góp 12 tháng, Trả thẳng toàn bộ</title>
+<line class="axis" x1="46" y1="214.0" x2="704" y2="214.0" opacity="0.6"/>
+<text x="38" y="214.0" text-anchor="end" dominant-baseline="middle">0</text><line class="axis" x1="46" y1="115.0" x2="704" y2="115.0" opacity="0.6"/>
+<text x="38" y="115.0" text-anchor="end" dominant-baseline="middle">8</text><line class="axis" x1="46" y1="16.0" x2="704" y2="16.0" opacity="0.6"/>
+<text x="38" y="16.0" text-anchor="end" dominant-baseline="middle">15</text><line class="guide" x1="46" y1="174.7" x2="704" y2="174.7"/>
+<text x="704" y="168.7" text-anchor="end">ngưỡng thận trọng</text><path class="series series--animated" d="M46.0,185.4 L73.4,178.4 L100.8,171.3 L128.3,164.2 L155.7,157.2 L183.1,150.1 L210.5,143.1 L237.9,136.0 L265.3,128.9 L292.8,121.9 L320.2,114.8 L347.6,107.8 L375.0,100.7 L402.4,93.6 L429.8,86.6 L457.3,79.5 L484.7,72.5 L512.1,65.4 L539.5,58.4 L566.9,51.3 L594.3,44.2 L621.8,37.2 L649.2,30.1 L676.6,23.1 L704.0,16.0" stroke="var(--safe)" style="--len:679"/><path class="series series--animated" d="M46.0,182.7 L73.4,180.1 L100.8,177.5 L128.3,175.0 L155.7,172.4 L183.1,169.9 L210.5,167.3 L237.9,164.7 L265.3,162.2 L292.8,159.6 L320.2,157.1 L347.6,154.5 L375.0,152.0 L402.4,149.4 L429.8,146.8 L457.3,144.3 L484.7,141.7 L512.1,139.2 L539.5,136.6 L566.9,134.0 L594.3,131.5 L621.8,128.9 L649.2,126.4 L676.6,123.8 L704.0,121.2" stroke="var(--caution)" style="--len:661"/><path class="series series--animated" d="M46.0,214.0 L73.4,206.9 L100.8,199.9 L128.3,192.8 L155.7,185.8 L183.1,178.7 L210.5,171.6 L237.9,164.6 L265.3,157.5 L292.8,150.5 L320.2,143.4 L347.6,136.4 L375.0,129.3 L402.4,122.2 L429.8,115.2 L457.3,108.1 L484.7,101.1 L512.1,94.0 L539.5,86.9 L566.9,79.9 L594.3,72.8 L621.8,65.8 L649.2,58.7 L676.6,51.6 L704.0,44.6" stroke="var(--risk)" style="--len:679"/><text x="46.0" y="232" text-anchor="start">tháng 0</text><text x="375.0" y="232" text-anchor="middle">tháng 12</text><text x="704.0" y="232" text-anchor="end">tháng 24</text>
+</svg>
+      </div>
+      <div class="row small" style="margin-top:10px"><span class="row" style="gap:6px"><span style="width:14px;height:2px;border-radius:2px;background:var(--safe)"></span>Trì hoãn 4 tháng rồi mua</span><span class="row" style="gap:6px"><span style="width:14px;height:2px;border-radius:2px;background:var(--caution)"></span>Trả góp 12 tháng</span><span class="row" style="gap:6px"><span style="width:14px;height:2px;border-radius:2px;background:var(--risk)"></span>Trả thẳng toàn bộ</span></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <p class="small">
+      <strong>DeciFin không đưa ra lời khuyên tài chính.</strong>
+      Kết quả trên dựa trên số liệu bạn khai báo và các tham số mô hình được công bố tại
+      <button class="link-btn" data-action="go" data-view="assumptions"
+              style="background:none;border:0;padding:0;text-decoration:underline;cursor:pointer;font:inherit">trang giả định</button>.
+      Quyền quyết định cuối cùng thuộc về bạn.
+    </p>
+  </div>
+</section>
+  <h2 class="preview-label">6. Giả định và giới hạn</h2>
+  
+<section class="view stack">
+  <div>
+    <p class="eyebrow">Minh bạch</p>
+    <h1 style="margin-top:8px;max-width:20ch">Mọi con số đều có nguồn gốc</h1>
+    <p class="lede" style="margin-top:14px">
+      Kết quả mô phỏng phụ thuộc vào các tham số dưới đây. Chúng tôi công bố cả những tham số do
+      nhóm tự đặt và chưa xác minh, vì giấu chúng đi sẽ khiến bạn tin vào kết quả nhiều hơn mức
+      đáng tin.
+    </p>
+  </div>
+
+  <div class="rows">
+    <div class="rows__item">
+        <div class="spread">
+          <strong>Lãi suất tiết kiệm tham chiếu</strong>
+          <span class="figure">5,0%/năm</span>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <span class="chip chip--risky">Nhóm tự đặt, chưa xác minh</span>
+        </div>
+        <p class="small muted" style="margin-top:8px">Nhóm tự đặt. Cần thay bằng trung bình lãi suất tiền gửi 12 tháng của 3-5 ngân hàng lớn, ghi rõ ngày tra cứu.</p>
+      </div><div class="rows__item">
+        <div class="spread">
+          <strong>Tỷ lệ lạm phát</strong>
+          <span class="figure">4,0%/năm</span>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <span class="chip chip--risky">Nhóm tự đặt, chưa xác minh</span>
+        </div>
+        <p class="small muted" style="margin-top:8px">Nhóm tự đặt. Cần thay bằng chỉ số giá tiêu dùng công bố gần nhất.</p>
+      </div><div class="rows__item">
+        <div class="spread">
+          <strong>Quỹ dự phòng mức an toàn</strong>
+          <span class="figure">6 tháng chi phí</span>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <span class="chip chip--caution">Thông lệ quốc tế</span>
+        </div>
+        <p class="small muted" style="margin-top:8px">Thông lệ quản lý tài chính cá nhân, chưa phải chuẩn mực bắt buộc tại Việt Nam.</p>
+      </div><div class="rows__item">
+        <div class="spread">
+          <strong>Quỹ dự phòng mức thận trọng</strong>
+          <span class="figure">3 tháng chi phí</span>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <span class="chip chip--caution">Thông lệ quốc tế</span>
+        </div>
+        <p class="small muted" style="margin-top:8px">Cùng nguồn với mức an toàn.</p>
+      </div><div class="rows__item">
+        <div class="spread">
+          <strong>Ngưỡng nợ an toàn</strong>
+          <span class="figure">30% thu nhập</span>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <span class="chip chip--risky">Nhóm tự đặt, chưa xác minh</span>
+        </div>
+        <p class="small muted" style="margin-top:8px">Nhóm tự đặt. Không được trình bày như quy định pháp luật khi chưa đối chiếu chính sách tín dụng công bố của ngân hàng.</p>
+      </div><div class="rows__item">
+        <div class="spread">
+          <strong>Ngưỡng nợ cảnh báo</strong>
+          <span class="figure">40% thu nhập</span>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <span class="chip chip--risky">Nhóm tự đặt, chưa xác minh</span>
+        </div>
+        <p class="small muted" style="margin-top:8px">Cùng nguồn với ngưỡng an toàn.</p>
+      </div><div class="rows__item">
+        <div class="spread">
+          <strong>Ngưỡng nợ chặn cứng</strong>
+          <span class="figure">50% thu nhập</span>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <span class="chip chip--risky">Nhóm tự đặt, chưa xác minh</span>
+        </div>
+        <p class="small muted" style="margin-top:8px">Cùng nguồn với ngưỡng an toàn.</p>
+      </div><div class="rows__item">
+        <div class="spread">
+          <strong>Trọng số điểm an toàn</strong>
+          <span class="figure">Thanh khoản 30% · Nợ 25% · Dòng tiền 20% · Mục tiêu 15% · Ổn định thu nhập 10%</span>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <span class="chip chip--caution">Lựa chọn thiết kế</span>
+        </div>
+        <p class="small muted" style="margin-top:8px">Lựa chọn thiết kế của nhóm, phản ánh quan điểm rằng mất khả năng ứng phó sự cố là rủi ro lớn nhất với người 18-25 tuổi. Không dựa trên chuẩn mực được công nhận nào.</p>
+      </div>
+  </div>
+
+  <div class="shell-card">
+    <div class="shell-card__core">
+      <h2>Công cụ này không làm gì</h2>
+      <ul class="notes" style="margin-top:14px">
+        <li class="note"><span class="note__dot" aria-hidden="true"></span><span>Không phải tư vấn tài chính, tư vấn đầu tư hay khuyến nghị mua bán sản phẩm tài chính.</span></li><li class="note"><span class="note__dot" aria-hidden="true"></span><span>Không dự báo thu nhập tương lai. Mọi kịch bản giả định thu nhập giữ nguyên như bạn khai báo.</span></li><li class="note"><span class="note__dot" aria-hidden="true"></span><span>Không tính tới biến động thị trường, thay đổi lãi suất hay các cú sốc chi tiêu bất ngờ.</span></li><li class="note"><span class="note__dot" aria-hidden="true"></span><span>Không kết nối tài khoản ngân hàng và không truy cập lịch sử giao dịch của bạn.</span></li><li class="note"><span class="note__dot" aria-hidden="true"></span><span>Không lưu dữ liệu của bạn lên máy chủ nào. Hồ sơ chỉ nằm trong bộ nhớ trình duyệt này.</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>Trọng số điểm an toàn tài chính</h3>
+    <div class="rows" style="margin-top:12px">
+      
+      <div class="rows__item spread">
+        <span class="small">Thanh khoản, đo bằng số tháng quỹ dự phòng</span>
+        <span class="figure">30%</span>
+      </div>
+      <div class="rows__item spread">
+        <span class="small">Gánh nặng nợ trên thu nhập</span>
+        <span class="figure">25%</span>
+      </div>
+      <div class="rows__item spread">
+        <span class="small">Đệm dòng tiền còn lại</span>
+        <span class="figure">20%</span>
+      </div>
+      <div class="rows__item spread">
+        <span class="small">Tỷ lệ mục tiêu bị trễ hạn</span>
+        <span class="figure">15%</span>
+      </div>
+      <div class="rows__item spread">
+        <span class="small">Mức ổn định của thu nhập</span>
+        <span class="figure">10%</span>
+      </div>
+    </div>
+    <p class="small muted" style="margin-top:12px">
+      Bộ trọng số này do nhóm đặt ra, phản ánh quan điểm rằng với người 18 đến 25 tuổi, mất khả năng
+      ứng phó sự cố là rủi ro nghiêm trọng nhất. Nó không dựa trên chuẩn mực được công nhận nào và
+      sẽ được hiệu chỉnh khi có dữ liệu người dùng thực tế.
+    </p>
+  </div>
+
+  <div class="row">
+    <button class="btn btn--ghost" data-action="go" data-view="welcome">Về trang đầu</button>
+    <button class="btn btn--ghost" data-action="wipe">Xoá hồ sơ khỏi máy này</button>
+  </div>
+</section>
+</div></main>
+</body>
+</html>
