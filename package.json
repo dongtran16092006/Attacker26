@@ -1,0 +1,22 @@
+{
+  "name": "decifin",
+  "version": "0.1.0",
+  "description": "Nền tảng hỗ trợ ra quyết định tài chính cá nhân, mô phỏng hệ quả trước khi chọn",
+  "type": "module",
+  "license": "MIT",
+  "author": "Đội 5 đích 1 hướng",
+  "scripts": {
+    "test": "node --test \"test/*.test.js\"",
+    "start": "node tools/serve.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "personal-finance",
+    "decision-support",
+    "vietnam",
+    "fintech",
+    "zero-dependency"
+  ]
+}
