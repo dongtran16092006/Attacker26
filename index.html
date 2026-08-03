@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="vi" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DeciFin - nhìn thấy hệ quả trước khi tiêu tiền</title>
+  <meta name="description" content="Công cụ mô phỏng hệ quả tài chính của một quyết định trước khi bạn chọn. Chạy hoàn toàn trên thiết bị của bạn.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="./assets/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%2316171a'/><text x='16' y='22' font-family='sans-serif' font-size='17' font-weight='700' fill='%23faf9f6' text-anchor='middle'>D</text></svg>">
+</head>
+<body>
+  <div id="app"></div>
+  <noscript>
+    <div style="max-width:640px;margin:64px auto;padding:0 20px">
+      <h1>Cần bật JavaScript</h1>
+      <p>DeciFin thực hiện toàn bộ tính toán ngay trên trình duyệt của bạn, nên cần JavaScript để chạy.
+      Đổi lại, không có số liệu tài chính nào của bạn rời khỏi thiết bị này.</p>
+    </div>
+  </noscript>
+  <script type="module">
+    import { mount } from './src/app.js';
+    mount(document.getElementById('app'));
+  </script>
+</body>
+</html>
