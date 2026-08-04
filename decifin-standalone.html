@@ -1,0 +1,2195 @@
+<!doctype html>
+<html lang="vi" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DeciFin - nhìn thấy hệ quả trước khi tiêu tiền</title>
+<meta name="description" content="Công cụ mô phỏng hệ quả tài chính của một quyết định trước khi bạn chọn. Chạy hoàn toàn trên thiết bị của bạn.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%2316171a'/><text x='16' y='22' font-family='sans-serif' font-size='17' font-weight='700' fill='%23faf9f6' text-anchor='middle'>D</text></svg>">
+<style>
+/* =============================================================================
+   DeciFin - hệ thiết kế
+   Nguyên tắc màu: màu CHỈ dùng để mang nghĩa trạng thái tài chính. Mọi thành
+   phần tương tác đều dùng sắc mực. Nhờ vậy khi người dùng thấy màu trên màn
+   hình, họ biết ngay đó là tín hiệu chứ không phải trang trí.
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --paper: #faf9f6;
+  --surface: #ffffff;
+  --surface-sunken: #f2f0ea;
+  --ink: #16171a;
+  --ink-soft: #43464d;
+  --muted: #6e7078;
+  --line: #e6e3dc;
+  --line-strong: #d5d1c7;
+
+  --safe: #1b7a4c;
+  --safe-bg: #eaf5ee;
+  --caution: #9a6400;
+  --caution-bg: #fdf3e2;
+  --risk: #ae2e24;
+  --risk-bg: #fbeceb;
+
+  --r-shell: 20px;
+  --r-core: 14px;
+  --r-control: 10px;
+
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --shadow-ambient: 0 1px 2px rgba(22, 23, 26, 0.04), 0 8px 24px -12px rgba(22, 23, 26, 0.14);
+  --shadow-lift: 0 2px 4px rgba(22, 23, 26, 0.05), 0 18px 40px -18px rgba(22, 23, 26, 0.22);
+
+  --font: 'Be Vietnam Pro', ui-sans-serif, 'Segoe UI', system-ui, sans-serif;
+  --font-figure: ui-monospace, 'SF Mono', 'Cascadia Mono', 'Roboto Mono', monospace;
+
+  --page: 1120px;
+}
+
+[data-theme='dark'] {
+  --paper: #111215;
+  --surface: #181a1e;
+  --surface-sunken: #101215;
+  --ink: #eceae5;
+  --ink-soft: #b9b7b1;
+  --muted: #8b8d94;
+  --line: #2a2d33;
+  --line-strong: #3a3e46;
+
+  --safe: #5cc98c;
+  --safe-bg: #14251c;
+  --caution: #e0a23c;
+  --caution-bg: #2a2013;
+  --risk: #f08079;
+  --risk-bg: #2c1614;
+
+  --shadow-ambient: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -12px rgba(0, 0, 0, 0.5);
+  --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.35), 0 18px 40px -18px rgba(0, 0, 0, 0.6);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; }
+h1 { font-size: clamp(1.9rem, 1.2rem + 2.6vw, 2.9rem); letter-spacing: -0.035em; }
+h2 { font-size: clamp(1.3rem, 1rem + 1.1vw, 1.7rem); letter-spacing: -0.028em; }
+h3 { font-size: 1.02rem; }
+p { margin: 0; }
+button, input, select { font: inherit; color: inherit; }
+
+.figure {
+  font-family: var(--font-figure);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* ---------- bố cục ---------- */
+.shell { max-width: var(--page); margin: 0 auto; padding: 0 20px; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 20;
+  backdrop-filter: saturate(180%) blur(14px);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  background: color-mix(in srgb, var(--paper) 82%, transparent);
+  border-bottom: 1px solid var(--line);
+}
+.topbar__inner { display: flex; align-items: center; gap: 18px; height: 62px; }
+.brand { display: flex; align-items: center; gap: 9px; font-weight: 600; letter-spacing: -0.03em; font-size: 1.05rem; }
+.brand__mark {
+  width: 26px; height: 26px; border-radius: 8px; flex: none;
+  background: var(--ink); color: var(--paper);
+  display: grid; place-items: center; font-size: 13px; font-weight: 700;
+}
+.topbar__spacer { flex: 1; }
+
+.steps { display: flex; gap: 3px; align-items: center; }
+.steps__item {
+  font-size: 12.5px; color: var(--muted); padding: 5px 10px; border-radius: 999px;
+  transition: color 0.3s var(--ease), background 0.3s var(--ease);
+}
+.steps__item[aria-current='true'] { color: var(--ink); background: var(--surface-sunken); font-weight: 500; }
+@media (max-width: 720px) { .steps { display: none; } }
+
+main { padding: 40px 0 88px; }
+.stack > * + * { margin-top: 22px; }
+
+/* ---------- vỏ lồng: khung ngoài mềm, lõi trong sắc ---------- */
+.shell-card {
+  background: var(--surface-sunken);
+  border: 1px solid var(--line);
+  border-radius: var(--r-shell);
+  padding: 6px;
+}
+.shell-card__core {
+  background: var(--surface);
+  border-radius: var(--r-core);
+  padding: 22px;
+  box-shadow: var(--shadow-ambient);
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-core);
+  padding: 22px;
+}
+
+.eyebrow {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em;
+  color: var(--muted); font-weight: 500;
+}
+.lede { color: var(--ink-soft); max-width: 62ch; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+
+/* ---------- điều khiển ---------- */
+.btn {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 11px 18px; border-radius: 999px;
+  border: 1px solid transparent; background: var(--ink); color: var(--paper);
+  font-weight: 500; font-size: 14.5px; cursor: pointer;
+  transition: transform 0.4s var(--ease), box-shadow 0.4s var(--ease), background 0.3s var(--ease);
+  box-shadow: var(--shadow-ambient);
+}
+.btn:hover { box-shadow: var(--shadow-lift); }
+.btn:active { transform: scale(0.978); }
+.btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.btn[disabled] { opacity: 0.42; cursor: not-allowed; box-shadow: none; }
+
+/* nút phụ dùng nền giấy, viền mảnh */
+.btn--ghost { background: var(--surface); color: var(--ink); border-color: var(--line-strong); box-shadow: none; }
+.btn--ghost:hover { background: var(--surface-sunken); box-shadow: none; }
+
+/* vòng tròn lồng trong nút, dịch chéo khi rê chuột */
+.btn__pip {
+  width: 26px; height: 26px; border-radius: 999px; flex: none;
+  display: grid; place-items: center; font-size: 13px; line-height: 1;
+  background: color-mix(in srgb, var(--paper) 22%, transparent);
+  transition: transform 0.45s var(--ease);
+}
+.btn--ghost .btn__pip { background: var(--surface-sunken); }
+.btn:hover .btn__pip { transform: translate(2px, -1px); }
+
+.field { display: grid; gap: 6px; }
+.field > label { font-size: 13px; font-weight: 500; color: var(--ink-soft); }
+.field .hint { font-size: 12px; color: var(--muted); }
+.input {
+  width: 100%; padding: 10px 13px;
+  background: var(--surface); border: 1px solid var(--line-strong);
+  border-radius: var(--r-control); font-family: var(--font-figure);
+  font-variant-numeric: tabular-nums;
+  transition: border-color 0.25s var(--ease), box-shadow 0.25s var(--ease);
+}
+.input:focus {
+  outline: none; border-color: var(--ink);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink) 12%, transparent);
+}
+.input--text { font-family: var(--font); }
+.grid-2 { display: grid; gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid-3 { display: grid; gap: 16px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 700px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.row--end { justify-content: flex-end; }
+.spread { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; }
+
+/* ---------- thẻ chỉ số ---------- */
+.metrics { display: grid; gap: 14px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 900px) { .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 460px) { .metrics { grid-template-columns: 1fr; } }
+
+.metric { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-core); padding: 16px 17px; }
+.metric__label { font-size: 12.5px; color: var(--muted); }
+.metric__value { font-size: 1.55rem; font-weight: 600; margin-top: 4px; }
+.metric__note { font-size: 12px; margin-top: 3px; }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 10px; border-radius: 999px;
+  font-size: 12px; font-weight: 500; white-space: nowrap;
+}
+.chip--safe { background: var(--safe-bg); color: var(--safe); }
+.chip--caution { background: var(--caution-bg); color: var(--caution); }
+.chip--risky, .chip--blocked { background: var(--risk-bg); color: var(--risk); }
+
+.t-safe { color: var(--safe); }
+.t-caution { color: var(--caution); }
+.t-risky, .t-blocked { color: var(--risk); }
+
+/* ---------- bảng so sánh ---------- */
+.compare { display: grid; gap: 14px; }
+
+.option {
+  border: 1px solid var(--line); border-radius: var(--r-shell);
+  background: var(--surface-sunken); padding: 6px;
+}
+.option__core {
+  background: var(--surface); border-radius: var(--r-core); padding: 20px;
+  box-shadow: var(--shadow-ambient);
+}
+.option--top { border-color: var(--line-strong); }
+.option--top .option__core { box-shadow: var(--shadow-lift); }
+.option--blocked .option__core { background: color-mix(in srgb, var(--risk-bg) 40%, var(--surface)); }
+
+.option__head { display: flex; align-items: flex-start; gap: 14px; }
+.option__rank {
+  width: 30px; height: 30px; border-radius: 999px; flex: none;
+  display: grid; place-items: center; font-size: 13px; font-weight: 600;
+  background: var(--surface-sunken); color: var(--ink-soft);
+  font-family: var(--font-figure);
+}
+.option--top .option__rank { background: var(--ink); color: var(--paper); }
+.option__title { font-weight: 600; letter-spacing: -0.02em; }
+.option__score { margin-left: auto; text-align: right; }
+.option__score b { font-size: 1.5rem; font-weight: 600; }
+
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; margin-top: 18px;
+  background: var(--line); border: 1px solid var(--line); border-radius: var(--r-control); overflow: hidden; }
+@media (max-width: 720px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.stat { background: var(--surface); padding: 11px 13px; }
+.stat__k { font-size: 11.5px; color: var(--muted); }
+.stat__v { font-weight: 600; margin-top: 2px; }
+
+.notes { margin: 16px 0 0; padding: 0; list-style: none; display: grid; gap: 7px; }
+.note { display: flex; gap: 9px; font-size: 13.5px; line-height: 1.5; align-items: baseline; }
+.note__dot { width: 5px; height: 5px; border-radius: 999px; flex: none; margin-top: 7px; background: var(--muted); }
+.note--block .note__dot { background: var(--risk); }
+.note--warn .note__dot { background: var(--caution); }
+.note--block { color: var(--risk); font-weight: 500; }
+
+/* ---------- điểm nhấn: lãi suất thực ---------- */
+.reveal-apr {
+  display: grid; grid-template-columns: 1fr auto 1fr; gap: 18px; align-items: center;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-core);
+  padding: 20px 22px;
+}
+@media (max-width: 620px) { .reveal-apr { grid-template-columns: 1fr; text-align: left; } }
+.reveal-apr__k { font-size: 12.5px; color: var(--muted); }
+.reveal-apr__v { font-size: 1.9rem; font-weight: 600; line-height: 1.1; margin-top: 2px; }
+.reveal-apr__arrow { color: var(--muted); font-size: 1.2rem; }
+@media (max-width: 620px) { .reveal-apr__arrow { display: none; } }
+
+/* ---------- biểu đồ ---------- */
+.chart { width: 100%; height: auto; display: block; overflow: visible; }
+.chart text { font-family: var(--font-figure); font-size: 10.5px; fill: var(--muted); }
+.chart .axis { stroke: var(--line); stroke-width: 1; }
+.chart .guide { stroke: var(--line); stroke-width: 1; stroke-dasharray: 3 4; }
+.chart .series { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------- bảng giả định ---------- */
+.rows { border: 1px solid var(--line); border-radius: var(--r-core); overflow: hidden; }
+.rows__item { padding: 14px 16px; background: var(--surface); }
+.rows__item + .rows__item { border-top: 1px solid var(--line); }
+
+/* ---------- chuyển động ---------- */
+@keyframes rise {
+  from { opacity: 0; transform: translate3d(0, 14px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes draw { to { stroke-dashoffset: 0; } }
+
+.rise { animation: rise 0.62s var(--ease-out) both; }
+.view { animation: rise 0.42s var(--ease-out) both; }
+
+.chart .series--animated {
+  stroke-dasharray: var(--len);
+  stroke-dashoffset: var(--len);
+  animation: draw 1.15s var(--ease) 0.15s forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .chart .series--animated { stroke-dasharray: none; stroke-dashoffset: 0; }
+}
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+footer.foot { border-top: 1px solid var(--line); padding: 26px 0 40px; color: var(--muted); font-size: 13px; }
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+<noscript>
+  <div style="max-width:640px;margin:64px auto;padding:0 20px">
+    <h1>Cần bật JavaScript</h1>
+    <p>DeciFin thực hiện toàn bộ tính toán ngay trên trình duyệt của bạn, nên cần JavaScript để chạy.
+    Đổi lại, không có số liệu tài chính nào của bạn rời khỏi thiết bị này.</p>
+  </div>
+</noscript>
+<script>
+// ======================================================================
+// src/engine/config.js
+// ======================================================================
+/**
+ * Tham số mô hình. Toàn bộ giá trị ở đây là giả định do nhóm đặt, không phải
+ * số liệu chính thức. Chúng được công bố nguyên vẹn trên màn hình "Giả định"
+ * để người dùng biết kết quả mô phỏng dựa trên cái gì.
+ *
+ * Quy ước đơn vị toàn hệ thống: tiền = VND, thời gian = tháng, lãi suất nhập
+ * theo năm. Không làm tròn trong lúc tính, chỉ làm tròn khi hiển thị.
+ */
+
+const ASSUMPTIONS = {
+  savingsApr: 0.05,
+  inflationApr: 0.04,
+  runwaySafe: 6,
+  runwayCaution: 3,
+  dtiSafe: 0.3,
+  dtiCaution: 0.4,
+  dtiHardStop: 0.5,
+  runwayHardStop: 1,
+  gateScoreCap: 35,
+};
+
+/** Nguồn gốc từng tham số. Hiển thị nguyên bảng này trên màn hình Giả định. */
+const ASSUMPTION_NOTES = [
+  {
+    key: 'savingsApr',
+    label: 'Lãi suất tiết kiệm tham chiếu',
+    value: '5,0%/năm',
+    status: 'unverified',
+    note: 'Nhóm tự đặt. Cần thay bằng trung bình lãi suất tiền gửi 12 tháng của 3-5 ngân hàng lớn, ghi rõ ngày tra cứu.',
+  },
+  {
+    key: 'inflationApr',
+    label: 'Tỷ lệ lạm phát',
+    value: '4,0%/năm',
+    status: 'unverified',
+    note: 'Nhóm tự đặt. Cần thay bằng chỉ số giá tiêu dùng công bố gần nhất.',
+  },
+  {
+    key: 'runwaySafe',
+    label: 'Quỹ dự phòng mức an toàn',
+    value: '6 tháng chi phí',
+    status: 'convention',
+    note: 'Thông lệ quản lý tài chính cá nhân, chưa phải chuẩn mực bắt buộc tại Việt Nam.',
+  },
+  {
+    key: 'runwayCaution',
+    label: 'Quỹ dự phòng mức thận trọng',
+    value: '3 tháng chi phí',
+    status: 'convention',
+    note: 'Cùng nguồn với mức an toàn.',
+  },
+  {
+    key: 'dtiSafe',
+    label: 'Ngưỡng nợ an toàn',
+    value: '30% thu nhập',
+    status: 'unverified',
+    note: 'Nhóm tự đặt. Không được trình bày như quy định pháp luật khi chưa đối chiếu chính sách tín dụng công bố của ngân hàng.',
+  },
+  {
+    key: 'dtiCaution',
+    label: 'Ngưỡng nợ cảnh báo',
+    value: '40% thu nhập',
+    status: 'unverified',
+    note: 'Cùng nguồn với ngưỡng an toàn.',
+  },
+  {
+    key: 'dtiHardStop',
+    label: 'Ngưỡng nợ chặn cứng',
+    value: '50% thu nhập',
+    status: 'unverified',
+    note: 'Cùng nguồn với ngưỡng an toàn.',
+  },
+  {
+    key: 'weights',
+    label: 'Trọng số điểm an toàn',
+    value: 'Thanh khoản 30% · Nợ 25% · Dòng tiền 20% · Mục tiêu 15% · Ổn định thu nhập 10%',
+    status: 'design',
+    note: 'Lựa chọn thiết kế của nhóm, phản ánh quan điểm rằng mất khả năng ứng phó sự cố là rủi ro lớn nhất với người 18-25 tuổi. Không dựa trên chuẩn mực được công nhận nào.',
+  },
+];
+
+/** Đổi lãi suất năm sang lãi suất tháng. */
+const monthlyRate = (apr) => apr / 12;
+
+// ======================================================================
+// src/engine/profile.js
+// ======================================================================
+/** Hồ sơ tài chính động và các chỉ số nền suy ra từ nó. */
+
+/**
+ * @typedef {Object} Debt
+ * @property {string} name
+ * @property {number} monthlyPayment
+ * @property {number} remainingMonths
+ *
+ * @typedef {Object} Goal
+ * @property {string} name
+ * @property {number} target
+ * @property {number} saved
+ * @property {number} deadlineMonth
+ * @property {number} allocWeight
+ *
+ * @typedef {Object} Profile
+ * @property {number} income thu nhập ròng hằng tháng
+ * @property {number} essential chi phí thiết yếu
+ * @property {number} discretionary chi tiêu linh hoạt
+ * @property {number} liquidAssets tài sản rút dùng được ngay
+ * @property {Debt[]} debts
+ * @property {Goal[]} goals
+ * @property {'stable'|'variable'} incomeStability
+ */
+
+const EMPTY_PROFILE = {
+  income: 0,
+  essential: 0,
+  discretionary: 0,
+  liquidAssets: 0,
+  debts: [],
+  goals: [],
+  incomeStability: 'stable',
+};
+
+/**
+ * Chi phí tối thiểu cố ý KHÔNG gồm chi tiêu linh hoạt. Quỹ dự phòng đo khả năng
+ * cầm cự khi mất thu nhập, mà trong tình huống đó người ta cắt ngay khoản linh
+ * hoạt nhưng vẫn phải trả tiền nhà, tiền ăn và tiền nợ. Đưa nó vào mẫu số sẽ
+ * làm mọi phương án bị đánh giá bi quan hơn thực tế.
+ */
+function baseline(profile) {
+  const debtPayments = profile.debts.reduce((sum, d) => sum + d.monthlyPayment, 0);
+  const minimumSpend = profile.essential + debtPayments;
+  const surplus = profile.income - profile.essential - profile.discretionary - debtPayments;
+
+  return {
+    debtPayments,
+    minimumSpend,
+    surplus,
+    savingsRate: profile.income > 0 ? surplus / profile.income : 0,
+    dti: profile.income > 0 ? debtPayments / profile.income : 0,
+    runway: minimumSpend > 0 ? profile.liquidAssets / minimumSpend : Infinity,
+  };
+}
+
+/** Kiểm tra hồ sơ trước khi mô phỏng. Trả về danh sách lỗi, rỗng nghĩa là hợp lệ. */
+function validate(profile) {
+  const errors = [];
+  if (!(profile.income > 0)) errors.push('Thu nhập phải lớn hơn 0.');
+  if (profile.essential < 0) errors.push('Chi phí thiết yếu không được âm.');
+  if (profile.discretionary < 0) errors.push('Chi tiêu linh hoạt không được âm.');
+  if (profile.liquidAssets < 0) errors.push('Tài sản thanh khoản không được âm.');
+  if (profile.essential > profile.income) {
+    errors.push('Chi phí thiết yếu đang vượt thu nhập. Hãy kiểm tra lại số liệu.');
+  }
+  profile.goals.forEach((g) => {
+    if (!(g.target > 0)) errors.push(`Mục tiêu "${g.name}" phải có số tiền lớn hơn 0.`);
+    if (g.saved > g.target) errors.push(`Mục tiêu "${g.name}" đã tích luỹ vượt số cần đạt.`);
+  });
+  return errors;
+}
+
+// ======================================================================
+// src/engine/finance.js
+// ======================================================================
+/** Toán trả góp và giá trị thời gian của tiền. */
+
+
+/**
+ * Khoản trả hằng tháng theo lãi phẳng: lãi tính trên toàn bộ dư nợ gốc ban đầu
+ * suốt kỳ hạn, dù người vay đã trả dần gốc. Đây là cách các gói trả góp tiêu
+ * dùng thường niêm yết.
+ * @param {number} principal số tiền vay
+ * @param {number} months kỳ hạn
+ * @param {number} flatMonthly lãi phẳng theo tháng, ví dụ 0.01 cho 1%/tháng
+ */
+function flatRatePayment(principal, months, flatMonthly) {
+  if (months <= 0) throw new RangeError('Kỳ hạn phải lớn hơn 0');
+  return principal / months + principal * flatMonthly;
+}
+
+/** Khoản trả hằng tháng theo dư nợ giảm dần (niên kim). */
+function reducingBalancePayment(principal, months, apr) {
+  if (months <= 0) throw new RangeError('Kỳ hạn phải lớn hơn 0');
+  const i = monthlyRate(apr);
+  if (i === 0) return principal / months;
+  const growth = (1 + i) ** months;
+  return (principal * i * growth) / (growth - 1);
+}
+
+/**
+ * Lãi suất thực: mức lãi làm cho giá trị hiện tại của dòng tiền hoàn trả bằng
+ * đúng số tiền vay. Không có công thức đóng nên giải bằng chia đôi khoảng.
+ * Chọn chia đôi thay vì Newton vì nó luôn hội tụ, không phụ thuộc điểm khởi tạo.
+ * @returns {number} lãi suất thực theo năm
+ */
+function effectiveApr(principal, monthlyPayment, months) {
+  if (months <= 0) throw new RangeError('Kỳ hạn phải lớn hơn 0');
+  if (monthlyPayment * months <= principal) return 0;
+
+  const npvAt = (i) => {
+    let sum = 0;
+    for (let t = 1; t <= months; t += 1) sum += monthlyPayment / (1 + i) ** t;
+    return sum - principal;
+  };
+
+  let lo = 1e-9;
+  let hi = 5;
+  for (let step = 0; step < 300 && hi - lo > 1e-12; step += 1) {
+    const mid = (lo + hi) / 2;
+    if (npvAt(mid) > 0) lo = mid;
+    else hi = mid;
+  }
+  return ((lo + hi) / 2) * 12;
+}
+
+/**
+ * Gói trả góp đã phân tích đầy đủ. Trường `spread` là tỷ số giữa lãi thực và
+ * lãi phẳng quy đổi năm, tức mức mà con số quảng cáo đang che đi.
+ */
+function analyseInstallment({ price, downPayment = 0, months, flatMonthly }) {
+  const financed = price - downPayment;
+  const payment = flatRatePayment(financed, months, flatMonthly);
+  const advertisedApr = flatMonthly * 12;
+  const trueApr = effectiveApr(financed, payment, months);
+  return {
+    financed,
+    payment,
+    months,
+    totalPaid: downPayment + payment * months,
+    totalInterest: payment * months - financed,
+    advertisedApr,
+    trueApr,
+    spread: advertisedApr > 0 ? trueApr / advertisedApr : 1,
+  };
+}
+
+/**
+ * Giá trị hiện tại của một chuỗi chi tiêu, chiết khấu theo lãi suất cơ hội.
+ * Một triệu phải trả sau 12 tháng nhẹ hơn một triệu phải trả hôm nay, và đây
+ * là chỗ duy nhất phản ánh được điều đó.
+ */
+function presentValue({ upfront = 0, recurring = 0, recurringMonths = 0, delayed = 0, delayMonths = 0 }, apr = ASSUMPTIONS.savingsApr) {
+  const d = monthlyRate(apr);
+  let pv = upfront;
+  for (let t = 1; t <= recurringMonths; t += 1) pv += recurring / (1 + d) ** t;
+  if (delayMonths > 0) pv += delayed / (1 + d) ** delayMonths;
+  else pv += delayed;
+  return pv;
+}
+
+// ======================================================================
+// src/engine/goals.js
+// ======================================================================
+/** Thời điểm đạt mục tiêu tiết kiệm. */
+
+
+/**
+ * Số tháng để đạt mục tiêu, có tính lãi kép trên phần đã tích luỹ.
+ * Suy ra từ đẳng thức giá trị tương lai của dòng tiền đều có gốc ban đầu:
+ *   target = saved*(1+r)^n + monthly*((1+r)^n - 1)/r
+ * giải ra n. Trả về Infinity khi không thể đạt được.
+ */
+function monthsToGoal(target, saved, monthly, apr = ASSUMPTIONS.savingsApr) {
+  if (saved >= target) return 0;
+  if (monthly <= 0) return Infinity;
+
+  const r = monthlyRate(apr);
+  if (r === 0) return Math.ceil((target - saved) / monthly);
+
+  const numerator = target * r + monthly;
+  const denominator = saved * r + monthly;
+  if (numerator <= 0 || denominator <= 0) return Infinity;
+  return Math.ceil(Math.log(numerator / denominator) / Math.log(1 + r));
+}
+
+/**
+ * Chuẩn hoá tỷ trọng phân bổ về tổng bằng 1.
+ * Bỏ qua bước này là lỗi im lặng nguy hiểm nhất của cả engine: mọi thời điểm
+ * đạt mục tiêu sẽ sai mà không có dấu hiệu nào báo ra ngoài.
+ */
+function normaliseWeights(goals) {
+  const total = goals.reduce((sum, g) => sum + (g.allocWeight || 0), 0);
+  if (total <= 0) {
+    const even = goals.length > 0 ? 1 / goals.length : 0;
+    return goals.map((g) => ({ ...g, allocWeight: even }));
+  }
+  return goals.map((g) => ({ ...g, allocWeight: (g.allocWeight || 0) / total }));
+}
+
+/** Quỹ đạo số dư tích luỹ theo tháng, dùng để vẽ biểu đồ. */
+function accumulationPath(saved, monthly, months, apr = ASSUMPTIONS.savingsApr) {
+  const r = monthlyRate(apr);
+  const path = [saved];
+  let balance = saved;
+  for (let t = 1; t <= months; t += 1) {
+    balance = balance * (1 + r) + monthly;
+    path.push(balance);
+  }
+  return path;
+}
+
+// ======================================================================
+// src/engine/scoring.js
+// ======================================================================
+/** Chấm điểm an toàn tài chính và tầng chặn cứng. */
+
+
+const WEIGHTS = {
+  liquidity: 0.3,
+  debt: 0.25,
+  cashflow: 0.2,
+  goals: 0.15,
+  stability: 0.1,
+};
+
+/** Nội suy tuyến tính giữa các mốc. `points` phải tăng dần theo x. */
+function interpolate(x, points) {
+  if (x <= points[0][0]) return points[0][1];
+  const last = points[points.length - 1];
+  if (x >= last[0]) return last[1];
+  for (let i = 0; i < points.length - 1; i += 1) {
+    const [x0, y0] = points[i];
+    const [x1, y1] = points[i + 1];
+    if (x >= x0 && x <= x1) return y0 + ((y1 - y0) * (x - x0)) / (x1 - x0);
+  }
+  return last[1];
+}
+
+const LIQUIDITY_CURVE = [[0, 0], [1, 20], [3, 55], [6, 85], [12, 100]];
+const DEBT_CURVE = [[0, 100], [0.3, 80], [0.4, 45], [0.5, 15], [0.6, 0]];
+const CASHFLOW_CURVE = [[-0.1, 0], [0, 25], [0.1, 55], [0.2, 80], [0.3, 100]];
+
+/**
+ * Điểm 0-100, càng cao càng an toàn.
+ * Trọng số là lựa chọn thiết kế, không phải chuẩn mực. Xem ASSUMPTION_NOTES.
+ */
+function scoreOutcome(profile, outcome) {
+  const lateGoals = outcome.goals.filter((g) => g.missesDeadline).length;
+  const goalCount = Math.max(outcome.goals.length, 1);
+  const cashflowRatio = profile.income > 0 ? outcome.surplusAfter / profile.income : 0;
+
+  const parts = {
+    liquidity: interpolate(outcome.runwayAfter, LIQUIDITY_CURVE),
+    debt: interpolate(outcome.dtiAfter, DEBT_CURVE),
+    cashflow: interpolate(cashflowRatio, CASHFLOW_CURVE),
+    goals: 100 * (1 - lateGoals / goalCount),
+    stability: profile.incomeStability === 'stable' ? 85 : 50,
+  };
+
+  const total = Object.keys(WEIGHTS).reduce((sum, key) => sum + parts[key] * WEIGHTS[key], 0);
+  return { total: Math.round(total * 10) / 10, parts };
+}
+
+/**
+ * Ràng buộc tuyệt đối, áp SAU khi chấm điểm.
+ * Điểm trọng số có thể bị các thành phần phụ kéo lên: một phương án vét sạch
+ * quỹ dự phòng nhưng không phát sinh nợ vẫn đạt trên 60 điểm. Tầng này tồn tại
+ * để engine không khuyên sai trong đúng tình huống đó.
+ */
+const HARD_RULES = [
+  {
+    code: 'NEGATIVE_CASHFLOW',
+    test: (o) => o.surplusAfter < 0,
+    message: 'Dòng tiền hằng tháng trở nên âm. Phương án này vượt quá khả năng chi trả.',
+  },
+  {
+    code: 'LIQUIDITY_DRAINED',
+    test: (o) => o.runwayAfter < ASSUMPTIONS.runwayHardStop,
+    message: 'Quỹ dự phòng còn dưới một tháng. Không còn đệm đỡ cho sự cố bất ngờ.',
+  },
+  {
+    code: 'DEBT_OVER_LIMIT',
+    test: (o) => o.dtiAfter > ASSUMPTIONS.dtiHardStop,
+    message: 'Nghĩa vụ nợ vượt quá một nửa thu nhập.',
+  },
+];
+
+function applyHardGate(score, outcome) {
+  const breaches = HARD_RULES.filter((rule) => rule.test(outcome));
+  if (breaches.length === 0) {
+    return { ...score, band: bandFor(score.total), breaches: [] };
+  }
+  return {
+    ...score,
+    total: Math.min(score.total, ASSUMPTIONS.gateScoreCap),
+    band: 'blocked',
+    breaches: breaches.map((b) => ({ code: b.code, message: b.message })),
+  };
+}
+
+function bandFor(total) {
+  if (total >= 70) return 'safe';
+  if (total >= 45) return 'caution';
+  return 'risky';
+}
+
+const BAND_LABEL = {
+  safe: 'An toàn',
+  caution: 'Cần thận trọng',
+  risky: 'Rủi ro cao',
+  blocked: 'Không khuyến nghị',
+};
+
+// ======================================================================
+// src/engine/explain.js
+// ======================================================================
+/**
+ * Sinh câu diễn giải từ bộ quy tắc xác định.
+ *
+ * Cố ý không dùng mô hình ngôn ngữ ở giai đoạn này vì hai lý do: kết quả phải
+ * lặp lại y hệt giữa các lần chạy để người dùng và bên thứ ba kiểm chứng được,
+ * và mô hình ngôn ngữ có thể sinh ra con số không tồn tại trong dữ liệu đầu vào.
+ * Lớp này tách riêng nên sau này gắn mô hình vào để diễn đạt lại là việc dễ,
+ * miễn nó không tham gia tính toán.
+ */
+
+
+const SEVERITY = { block: 3, warn: 2, note: 1 };
+
+function explain(profile, outcome, extras = {}) {
+  const messages = [];
+  const push = (severity, text) => messages.push({ severity, text });
+
+  const runway = outcome.runwayAfter;
+  if (runway < ASSUMPTIONS.runwayHardStop) {
+    push('block', `Quỹ dự phòng chỉ còn ${fmtMonths(runway)}, dưới mức tối thiểu để xử lý sự cố.`);
+  } else if (runway < ASSUMPTIONS.runwayCaution) {
+    push('warn', `Quỹ dự phòng còn ${fmtMonths(runway)}, dưới ngưỡng thận trọng ${ASSUMPTIONS.runwayCaution} tháng.`);
+  } else if (runway < ASSUMPTIONS.runwaySafe) {
+    push('note', `Quỹ dự phòng còn ${fmtMonths(runway)}, chưa đạt mức an toàn ${ASSUMPTIONS.runwaySafe} tháng.`);
+  } else {
+    push('note', `Quỹ dự phòng còn ${fmtMonths(runway)}, đạt mức an toàn.`);
+  }
+
+  if (outcome.surplusAfter < 0) {
+    push('block', `Dòng tiền âm ${fmtMoney(Math.abs(outcome.surplusAfter))} mỗi tháng.`);
+  }
+
+  if (outcome.dtiAfter > ASSUMPTIONS.dtiCaution) {
+    push('warn', `Nghĩa vụ nợ chiếm ${fmtPercent(outcome.dtiAfter)} thu nhập, vượt ngưỡng tham chiếu ${fmtPercent(ASSUMPTIONS.dtiCaution)}.`);
+  } else if (outcome.dtiAfter > ASSUMPTIONS.dtiSafe) {
+    push('note', `Nghĩa vụ nợ chiếm ${fmtPercent(outcome.dtiAfter)} thu nhập.`);
+  }
+
+  outcome.goals.forEach((goal) => {
+    if (!Number.isFinite(goal.etaAfter)) {
+      push('warn', `Mục tiêu "${goal.name}" sẽ không đạt được với dòng tiền còn lại.`);
+    } else if (goal.delayMonths > 0) {
+      const suffix = goal.missesDeadline ? ' và trễ hạn mong muốn' : '';
+      push(goal.missesDeadline ? 'warn' : 'note',
+        `Mục tiêu "${goal.name}" chậm thêm ${goal.delayMonths} tháng, dự kiến đạt sau ${goal.etaAfter} tháng${suffix}.`);
+    }
+  });
+
+  if (extras.installment) {
+    const { trueApr, advertisedApr, spread } = extras.installment;
+    push('warn',
+      `Lãi suất thực của gói trả góp là ${fmtPercent(trueApr, 2)}/năm, trong khi mức quảng cáo quy đổi chỉ ${fmtPercent(advertisedApr, 1)}/năm, gấp ${spread.toFixed(2)} lần.`);
+  }
+
+  return messages.sort((a, b) => SEVERITY[b.severity] - SEVERITY[a.severity]);
+}
+
+const fmtMonths = (m) => `${m.toFixed(1)} tháng`;
+const fmtPercent = (v, digits = 1) => `${(v * 100).toFixed(digits)}%`;
+const fmtMoney = (v) => `${Math.round(v).toLocaleString('vi-VN')} đ`;
+
+// ======================================================================
+// src/engine/index.js
+// ======================================================================
+/**
+ * Cửa duy nhất giao diện gọi vào engine.
+ *
+ * Ý tưởng trung tâm của cả sản phẩm nằm ở đây: bốn nhóm quyết định trong phạm vi
+ * MVP (mua sắm giá trị lớn, chọn phương án trả góp, phân bổ tiền giữa các mục
+ * tiêu, điều chỉnh kế hoạch tiết kiệm) khác nhau về bối cảnh nhưng đồng nhất về
+ * cấu trúc toán học. Tất cả đều quy về một câu hỏi: một sự kiện dòng tiền tác
+ * động thế nào lên hồ sơ hiện tại và lên thời điểm đạt mục tiêu. Nhờ vậy chỉ cần
+ * một engine kèm bốn biểu mẫu nhập liệu, thay vì bốn hệ thống riêng.
+ */
+
+
+/**
+ * Sự kiện tài chính chuẩn hoá. Mọi phương án của cả bốn nhóm quyết định đều mô
+ * tả được bằng đúng sáu trường này.
+ * @typedef {Object} FinancialEvent
+ * @property {string} label
+ * @property {number} [upfront] chi ngay tại thời điểm hiện tại
+ * @property {number} [recurring] chi đều mỗi tháng
+ * @property {number} [recurringMonths]
+ * @property {number} [delayMonths] số tháng trì hoãn trước khi chi
+ * @property {number} [delayed] số tiền chi sau khi trì hoãn
+ * @property {number} [surplusDelta] thay đổi dòng tiền dư
+ */
+
+function makeEvent(label, patch = {}) {
+  return {
+    label,
+    upfront: 0,
+    recurring: 0,
+    recurringMonths: 0,
+    delayMonths: 0,
+    delayed: 0,
+    surplusDelta: 0,
+    ...patch,
+  };
+}
+
+/** Áp một sự kiện lên hồ sơ và tính lại toàn bộ chỉ số. */
+function simulate(profile, event) {
+  const base = baseline(profile);
+  const goals = normaliseWeights(profile.goals);
+  const d = monthlyRate(ASSUMPTIONS.savingsApr);
+
+  // Trì hoãn: tích luỹ dòng tiền dư có sinh lãi trong K tháng rồi mới chi.
+  let liquidAfter = profile.liquidAssets - event.upfront;
+  if (event.delayMonths > 0) {
+    let balance = profile.liquidAssets;
+    for (let t = 0; t < event.delayMonths; t += 1) {
+      balance = balance * (1 + d) + base.surplus;
+    }
+    liquidAfter = balance - event.delayed;
+  } else {
+    liquidAfter -= event.delayed;
+  }
+
+  const debtPaymentsAfter = base.debtPayments + event.recurring;
+  const minimumSpendAfter = profile.essential + debtPaymentsAfter;
+  const surplusAfter =
+    profile.income - profile.essential - profile.discretionary - debtPaymentsAfter + event.surplusDelta;
+
+  const goalOutcomes = goals.map((goal) => {
+    const contributionBefore = base.surplus * goal.allocWeight;
+    const contributionAfter = Math.max(surplusAfter, 0) * goal.allocWeight;
+    const etaBefore = monthsToGoal(goal.target, goal.saved, contributionBefore);
+    const etaAfter = monthsToGoal(goal.target, goal.saved, contributionAfter);
+    const delayMonths =
+      Number.isFinite(etaAfter) && Number.isFinite(etaBefore) ? etaAfter - etaBefore : Infinity;
+    return {
+      name: goal.name,
+      deadlineMonth: goal.deadlineMonth,
+      etaBefore,
+      etaAfter,
+      delayMonths,
+      missesDeadline: !(etaAfter <= goal.deadlineMonth),
+    };
+  });
+
+  return {
+    label: event.label,
+    liquidAfter,
+    runwayAfter: minimumSpendAfter > 0 ? liquidAfter / minimumSpendAfter : Infinity,
+    dtiAfter: profile.income > 0 ? debtPaymentsAfter / profile.income : 0,
+    surplusAfter,
+    totalCash: event.upfront + event.recurring * event.recurringMonths + event.delayed,
+    presentValue: presentValue({
+      upfront: event.upfront,
+      recurring: event.recurring,
+      recurringMonths: event.recurringMonths,
+      delayed: event.delayed,
+      delayMonths: event.delayMonths,
+    }),
+    goals: goalOutcomes,
+  };
+}
+
+/** Mô phỏng, chấm điểm, áp chặn cứng, sinh diễn giải. */
+function evaluate(profile, event, extras = {}) {
+  const outcome = simulate(profile, event);
+  const score = applyHardGate(scoreOutcome(profile, outcome), outcome);
+  return { outcome, score, messages: explain(profile, outcome, extras) };
+}
+
+/**
+ * Xếp hạng các phương án. Engine không chọn thay người dùng: nó sắp xếp theo
+ * mức an toàn, và khi hai phương án ngang điểm thì phương án rẻ hơn về giá trị
+ * hiện tại đứng trước.
+ */
+function rank(profile, events, extrasByLabel = {}) {
+  return rankScenarios(events.map((event) => ({ profile, event })), extrasByLabel);
+}
+
+/**
+ * Bản tổng quát của rank cho trường hợp mỗi phương án gắn với một hồ sơ khác
+ * nhau. Nhóm quyết định "phân bổ giữa các mục tiêu" cần đúng điều này: thay đổi
+ * tỷ trọng là thay đổi hồ sơ, không phải thay đổi sự kiện dòng tiền.
+ * @param {{profile: Object, event: FinancialEvent}[]} scenarios
+ */
+function rankScenarios(scenarios, extrasByLabel = {}) {
+  return scenarios
+    .map(({ profile, event }) => ({
+      ...evaluate(profile, event, extrasByLabel[event.label] || {}),
+      label: event.label,
+    }))
+    .sort((a, b) => b.score.total - a.score.total || a.outcome.presentValue - b.outcome.presentValue)
+    .map((result, index) => ({ ...result, rank: index + 1 }));
+}
+
+// ======================================================================
+// src/ui/format.js
+// ======================================================================
+/** Định dạng hiển thị. Tách riêng để engine không dính gì tới chuyện trình bày. */
+
+const vnd = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 });
+
+const money = (v) => `${vnd.format(Math.round(v))} đ`;
+
+/** Rút gọn cho thẻ chỉ số: 25.000.000 thành 25,0 tr. */
+function moneyShort(v) {
+  const abs = Math.abs(v);
+  if (abs >= 1_000_000_000) return `${(v / 1_000_000_000).toFixed(2).replace('.', ',')} tỷ`;
+  if (abs >= 1_000_000) return `${(v / 1_000_000).toFixed(1).replace('.', ',')} tr`;
+  if (abs >= 1_000) return `${Math.round(v / 1_000)} ng`;
+  return vnd.format(Math.round(v));
+}
+
+const percent = (v, digits = 1) => `${(v * 100).toFixed(digits).replace('.', ',')}%`;
+const decimal = (v, digits = 1) => v.toFixed(digits).replace('.', ',');
+
+function months(v) {
+  if (!Number.isFinite(v)) return 'không đạt được';
+  return `${decimal(v)} tháng`;
+}
+
+function monthsInt(v) {
+  if (!Number.isFinite(v)) return 'không đạt được';
+  return `${Math.round(v)} tháng`;
+}
+
+/** Chặn ký tự lạ khi nhét dữ liệu người dùng vào chuỗi HTML. */
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/** Đọc số người dùng gõ, chấp nhận cả dấu chấm phân cách nghìn kiểu Việt Nam. */
+function parseAmount(raw) {
+  if (typeof raw === 'number') return raw;
+  const cleaned = String(raw).replace(/[^\d,-]/g, '').replace(',', '.');
+  const n = Number.parseFloat(cleaned);
+  return Number.isFinite(n) ? n : 0;
+}
+
+// ======================================================================
+// src/ui/presets.js
+// ======================================================================
+/**
+ * Ba hồ sơ mẫu. Lý do tồn tại: người xem lần đầu sẽ không ngồi nhập 12 ô dữ
+ * liệu. Họ cần thấy kết quả trong mười giây đầu, nếu không họ rời đi.
+ */
+
+const PRESETS = [
+  {
+    id: 'sinh-vien',
+    name: 'Sinh viên năm cuối',
+    summary: 'Làm thêm 6 triệu, ở ghép, chưa có nợ',
+    profile: {
+      income: 6_000_000, essential: 3_600_000, discretionary: 1_200_000,
+      liquidAssets: 8_000_000, debts: [], incomeStability: 'variable',
+      goals: [
+        { name: 'Quỹ dự phòng', target: 21_600_000, saved: 8_000_000, deadlineMonth: 24, allocWeight: 0.6 },
+        { name: 'Khoá học tiếng Anh', target: 12_000_000, saved: 1_000_000, deadlineMonth: 10, allocWeight: 0.4 },
+      ],
+    },
+  },
+  {
+    id: 'moi-di-lam',
+    name: 'Người mới đi làm',
+    summary: 'Thu nhập 12 triệu tại TP.HCM, chưa có nợ',
+    profile: {
+      income: 12_000_000, essential: 6_500_000, discretionary: 2_000_000,
+      liquidAssets: 25_000_000, debts: [], incomeStability: 'stable',
+      goals: [
+        { name: 'Quỹ dự phòng 6 tháng', target: 39_000_000, saved: 25_000_000, deadlineMonth: 18, allocWeight: 0.6 },
+        { name: 'Học chứng chỉ nghề', target: 20_000_000, saved: 2_000_000, deadlineMonth: 12, allocWeight: 0.4 },
+      ],
+    },
+  },
+  {
+    id: 'di-lam-hai-nam',
+    name: 'Đi làm hai năm, đang trả nợ',
+    summary: 'Thu nhập 18 triệu, còn khoản vay xe 3,2 triệu mỗi tháng',
+    profile: {
+      income: 18_000_000, essential: 8_500_000, discretionary: 3_000_000,
+      liquidAssets: 30_000_000,
+      debts: [{ name: 'Vay mua xe', monthlyPayment: 3_200_000, remainingMonths: 20 }],
+      incomeStability: 'stable',
+      goals: [
+        { name: 'Quỹ dự phòng', target: 70_200_000, saved: 30_000_000, deadlineMonth: 24, allocWeight: 0.5 },
+        { name: 'Tiền đặt cọc thuê nhà riêng', target: 40_000_000, saved: 4_000_000, deadlineMonth: 15, allocWeight: 0.5 },
+      ],
+    },
+  },
+];
+
+/** Bốn nhóm quyết định trong phạm vi MVP. */
+const DECISION_KINDS = [
+  {
+    id: 'purchase',
+    name: 'Mua sắm giá trị lớn',
+    blurb: 'So sánh trả thẳng, trả góp và trì hoãn cho một khoản chi lớn.',
+    example: 'Mua laptop 25 triệu',
+  },
+  {
+    id: 'installment',
+    name: 'Chọn gói trả góp',
+    blurb: 'Đặt cạnh nhau nhiều gói trả góp và phơi bày lãi suất thực của từng gói.',
+    example: 'Gói 6 tháng so với gói 12 tháng',
+  },
+  {
+    id: 'allocation',
+    name: 'Phân bổ giữa các mục tiêu',
+    blurb: 'Thử các cách chia dòng tiền dư và xem mục tiêu nào về đích sớm hơn.',
+    example: 'Ưu tiên quỹ dự phòng hay ưu tiên đi học',
+  },
+  {
+    id: 'savings',
+    name: 'Điều chỉnh kế hoạch tiết kiệm',
+    blurb: 'Xem việc tăng hoặc giảm mức tiết kiệm dịch chuyển các mục tiêu bao xa.',
+    example: 'Tiết kiệm thêm 1 triệu mỗi tháng',
+  },
+];
+
+// ======================================================================
+// src/ui/state.js
+// ======================================================================
+/**
+ * Trạng thái ứng dụng.
+ *
+ * Toàn bộ dữ liệu nằm trong bộ nhớ trình duyệt và localStorage. Không có máy
+ * chủ, không có lệnh gọi mạng nào trong mã nguồn. Đây là lựa chọn có chủ đích:
+ * dữ liệu thu nhập, nợ và tài sản là dữ liệu cá nhân nhạy cảm, nên ở giai đoạn
+ * kiểm chứng, cách an toàn nhất là không thu thập gì cả.
+ */
+
+
+const STORAGE_KEY = 'decifin.profile.v1';
+const THEME_KEY = 'decifin.theme';
+
+const listeners = new Set();
+
+const state = {
+  view: 'welcome',
+  profile: structuredClone(EMPTY_PROFILE),
+  wizardStep: 0,
+  decisionKind: 'purchase',
+  decisionInput: null,
+  results: null,
+  installment: null,
+};
+
+function subscribe(fn) {
+  listeners.add(fn);
+  return () => listeners.delete(fn);
+}
+
+function update(patch) {
+  Object.assign(state, patch);
+  listeners.forEach((fn) => fn(state));
+}
+
+function saveProfile() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.profile));
+  } catch {
+    // Chế độ riêng tư của trình duyệt có thể chặn ghi. Mất khả năng lưu không
+    // ảnh hưởng tới việc dùng ứng dụng nên bỏ qua trong im lặng là đúng.
+  }
+}
+
+function loadProfile() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return { ...structuredClone(EMPTY_PROFILE), ...parsed };
+  } catch {
+    return null;
+  }
+}
+
+function clearProfile() {
+  try { localStorage.removeItem(STORAGE_KEY); } catch { /* như trên */ }
+}
+
+function readTheme() {
+  try { return localStorage.getItem(THEME_KEY); } catch { return null; }
+}
+
+function writeTheme(value) {
+  try { localStorage.setItem(THEME_KEY, value); } catch { /* như trên */ }
+}
+
+// ======================================================================
+// src/ui/components/chart.js
+// ======================================================================
+/**
+ * Biểu đồ đường vẽ tay bằng SVG.
+ *
+ * Không dùng thư viện biểu đồ vì chỉ cần đúng một loại đồ thị, và một tệp 90
+ * dòng thì rẻ hơn nhiều so với việc kéo theo cả một phụ thuộc ngoài vào một
+ * ứng dụng tài chính chạy trên máy người dùng.
+ */
+
+
+const W = 720;
+const H = 240;
+const PAD = { top: 16, right: 16, bottom: 26, left: 46 };
+
+/**
+ * @param {{name:string, values:number[], tone:'safe'|'caution'|'risky'|'ink'}[]} series
+ * @param {{unit?:'money'|'months', animate?:boolean, guideAt?:number, guideLabel?:string}} opts
+ */
+function lineChart(series, opts = {}) {
+  const { unit = 'money', animate = true, guideAt = null, guideLabel = '' } = opts;
+  if (series.length === 0 || series[0].values.length === 0) return '';
+
+  const span = Math.max(...series.map((s) => s.values.length)) - 1 || 1;
+  const flat = series.flatMap((s) => s.values);
+  const rawMax = Math.max(...flat, guideAt ?? -Infinity);
+  const rawMin = Math.min(...flat, 0);
+  const max = rawMax === rawMin ? rawMax + 1 : rawMax;
+  const min = rawMin;
+
+  const plotW = W - PAD.left - PAD.right;
+  const plotH = H - PAD.top - PAD.bottom;
+  const x = (i) => PAD.left + (i / span) * plotW;
+  const y = (v) => PAD.top + plotH - ((v - min) / (max - min)) * plotH;
+
+  const ticks = [min, min + (max - min) / 2, max];
+  const gridLines = ticks
+    .map((t) => {
+      const yy = y(t).toFixed(1);
+      const label = unit === 'money' ? moneyShort(t) : `${Math.round(t)}`;
+      return `<line class="axis" x1="${PAD.left}" y1="${yy}" x2="${W - PAD.right}" y2="${yy}" opacity="0.6"/>
+<text x="${PAD.left - 8}" y="${yy}" text-anchor="end" dominant-baseline="middle">${label}</text>`;
+    })
+    .join('');
+
+  const guide = guideAt === null ? '' :
+    `<line class="guide" x1="${PAD.left}" y1="${y(guideAt).toFixed(1)}" x2="${W - PAD.right}" y2="${y(guideAt).toFixed(1)}"/>
+<text x="${W - PAD.right}" y="${(y(guideAt) - 6).toFixed(1)}" text-anchor="end">${guideLabel}</text>`;
+
+  const paths = series
+    .map((s) => {
+      const d = s.values.map((v, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+      // xấp xỉ chiều dài đường để chạy hiệu ứng vẽ dần
+      const length = Math.round(estimateLength(s.values, x, y));
+      const cls = animate ? 'series series--animated' : 'series';
+      return `<path class="${cls}" d="${d}" stroke="${strokeFor(s.tone)}" style="--len:${length}"/>`;
+    })
+    .join('');
+
+  const xLabels = [0, Math.round(span / 2), span]
+    .map((i) => `<text x="${x(i).toFixed(1)}" y="${H - 8}" text-anchor="${i === 0 ? 'start' : i === span ? 'end' : 'middle'}">tháng ${i}</text>`)
+    .join('');
+
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" preserveAspectRatio="xMidYMid meet">
+<title>${escapeHtml(series.map((s) => s.name).join(', '))}</title>
+${gridLines}${guide}${paths}${xLabels}
+</svg>`;
+}
+
+function estimateLength(values, x, y) {
+  let total = 0;
+  for (let i = 1; i < values.length; i += 1) {
+    total += Math.hypot(x(i) - x(i - 1), y(values[i]) - y(values[i - 1]));
+  }
+  return Math.max(total, 1);
+}
+
+function strokeFor(tone) {
+  if (tone === 'safe') return 'var(--safe)';
+  if (tone === 'caution') return 'var(--caution)';
+  if (tone === 'risky' || tone === 'blocked') return 'var(--risk)';
+  return 'var(--ink)';
+}
+
+/** Chú giải màu cho biểu đồ. Không dùng chấm trang trí ở chỗ khác. */
+function legend(series) {
+  return `<div class="row small" style="margin-top:10px">${series
+    .map((s) => `<span class="row" style="gap:6px"><span style="width:14px;height:2px;border-radius:2px;background:${strokeFor(s.tone)}"></span>${escapeHtml(s.name)}</span>`)
+    .join('')}</div>`;
+}
+
+// ======================================================================
+// src/ui/scenarios.js
+// ======================================================================
+/**
+ * Dựng các phương án để so sánh, từ dữ liệu người dùng nhập.
+ *
+ * Tách khỏi tầng giao diện để kiểm thử được: mỗi hàm nhận một hàm đọc số và hồ
+ * sơ hiện tại, trả về danh sách phương án. Không đụng tới DOM.
+ *
+ * @typedef {(name: string) => number} Reader
+ */
+
+
+
+
+
+
+class ScenarioError extends Error {}
+
+/** Mua sắm giá trị lớn: trả thẳng, trả góp, trì hoãn. */
+function buildPurchase(read) {
+  const price = read('price');
+  if (!(price > 0)) throw new ScenarioError('Hãy nhập giá món hàng lớn hơn 0.');
+
+  const downPayment = clamp(read('downPayment'), 0, price);
+  const months = Math.max(Math.round(read('months')) || 12, 1);
+  const flatMonthly = read('flatRate') / 100;
+  const delayMonths = Math.max(Math.round(read('delayMonths')) || 0, 0);
+
+  const installment = analyseInstallment({ price, downPayment, months, flatMonthly });
+  const installmentLabel = `Trả góp ${months} tháng`;
+
+  const events = [
+    makeEvent('Trả thẳng toàn bộ', { upfront: price }),
+    makeEvent(installmentLabel, {
+      upfront: downPayment, recurring: installment.payment, recurringMonths: months,
+    }),
+  ];
+
+  if (delayMonths > 0) {
+    const inflated = price * (1 + monthlyRate(ASSUMPTIONS.inflationApr)) ** delayMonths;
+    events.push(makeEvent(`Trì hoãn ${delayMonths} tháng rồi mua`, { delayMonths, delayed: inflated }));
+  }
+
+  return { events, installment, extras: { [installmentLabel]: { installment } } };
+}
+
+/** So sánh nhiều gói trả góp, kèm phương án không vay làm mốc đối chứng. */
+function buildInstallment(read) {
+  const price = read('price');
+  if (!(price > 0)) throw new ScenarioError('Hãy nhập giá món hàng lớn hơn 0.');
+
+  const downPayment = clamp(read('downPayment'), 0, price);
+  const packs = [
+    { key: 'A', months: Math.max(Math.round(read('monthsA')) || 6, 1), flat: read('flatA') / 100 },
+    { key: 'B', months: Math.max(Math.round(read('monthsB')) || 12, 1), flat: read('flatB') / 100 },
+  ];
+
+  const events = [makeEvent('Trả thẳng, không vay', { upfront: price })];
+  const extras = {};
+  let costliest = null;
+
+  for (const pack of packs) {
+    const analysis = analyseInstallment({ price, downPayment, months: pack.months, flatMonthly: pack.flat });
+    const label = `Gói ${pack.key}: ${pack.months} tháng`;
+    events.push(makeEvent(label, {
+      upfront: downPayment, recurring: analysis.payment, recurringMonths: pack.months,
+    }));
+    extras[label] = { installment: analysis };
+    if (!costliest || analysis.trueApr > costliest.trueApr) costliest = analysis;
+  }
+
+  return { events, extras, installment: costliest };
+}
+
+/**
+ * Phân bổ giữa hai mục tiêu. Mỗi cách chia là một hồ sơ khác nhau chứ không
+ * phải một sự kiện dòng tiền khác nhau, nên trả về danh sách kịch bản.
+ */
+function buildAllocation(_read, profile) {
+  const goals = normaliseWeights(profile.goals);
+  if (goals.length < 2) throw new ScenarioError('Nhóm quyết định này cần ít nhất hai mục tiêu.');
+
+  const candidates = [[0.8, 0.2], [0.5, 0.5], [0.2, 0.8], [goals[0].allocWeight, goals[1].allocWeight]];
+  const seen = new Set();
+
+  const scenarios = candidates
+    .filter(([a, b]) => {
+      const key = `${Math.round(a * 100)}-${Math.round(b * 100)}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .map(([a, b]) => ({
+      profile: { ...profile, goals: [{ ...goals[0], allocWeight: a }, { ...goals[1], allocWeight: b }] },
+      event: makeEvent(`${Math.round(a * 100)}% cho ${goals[0].name}, ${Math.round(b * 100)}% cho ${goals[1].name}`),
+    }));
+
+  return { scenarios };
+}
+
+/**
+ * Điều chỉnh mức tiết kiệm. Tiết kiệm thêm nghĩa là cắt bớt chi tiêu linh hoạt,
+ * nên dòng tiền dư tăng đúng bằng phần cắt đi, và không cắt quá số đang có.
+ */
+function buildSavings(read, profile) {
+  const delta = read('savingsDelta');
+  if (!(delta > 0)) throw new ScenarioError('Hãy nhập số tiền tiết kiệm thêm lớn hơn 0.');
+
+  const seen = new Set();
+  const events = [0, delta, delta * 2]
+    .map((d) => Math.min(d, profile.discretionary))
+    .filter((d) => {
+      const key = Math.round(d);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .map((d) => makeEvent(
+      d === 0 ? 'Giữ nguyên như hiện tại' : `Tiết kiệm thêm ${money(d)} mỗi tháng`,
+      { surplusDelta: d },
+    ));
+
+  if (events.length < 2) {
+    throw new ScenarioError('Chi tiêu linh hoạt hiện tại không đủ để cắt thêm. Hãy kiểm tra lại hồ sơ.');
+  }
+  return { events };
+}
+
+const BUILDERS = {
+  purchase: buildPurchase,
+  installment: buildInstallment,
+  allocation: buildAllocation,
+  savings: buildSavings,
+};
+
+const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
+
+// ======================================================================
+// src/ui/views/welcome.js
+// ======================================================================
+
+
+
+function welcomeView() {
+  return `
+<section class="view stack">
+  <div>
+    <p class="eyebrow">Công cụ trước khi quyết định</p>
+    <h1 style="margin-top:10px;max-width:19ch">Nhìn thấy hệ quả trước khi tiêu tiền.</h1>
+    <p class="lede" style="margin-top:14px">
+      Ứng dụng ghi chép cho bạn biết đã tiêu bao nhiêu. DeciFin cho bạn biết nếu chọn phương án này
+      thì quỹ dự phòng còn lại bao nhiêu, mục tiêu bị đẩy lùi bao lâu, và gói trả góp kia thật ra
+      đang tính lãi bao nhiêu.
+    </p>
+    <div class="row" style="margin-top:24px">
+      <button class="btn" data-action="start-blank">
+        Tạo hồ sơ của tôi <span class="btn__pip" aria-hidden="true">↗</span>
+      </button>
+      <button class="btn btn--ghost" data-action="go" data-view="assumptions">Xem giả định của mô hình</button>
+    </div>
+  </div>
+
+  <div class="shell-card rise" style="animation-delay:.08s">
+    <div class="shell-card__core">
+      <div class="spread">
+        <h2>Hoặc mở một hồ sơ mẫu</h2>
+        <span class="small muted">Dữ liệu dựng sẵn, xem kết quả ngay</span>
+      </div>
+      <div class="grid-3" style="margin-top:18px">
+        ${PRESETS.map((p, i) => `
+        <button class="panel rise" data-action="preset" data-id="${p.id}"
+                style="text-align:left;cursor:pointer;animation-delay:${0.12 + i * 0.06}s">
+          <h3>${escapeHtml(p.name)}</h3>
+          <p class="small muted" style="margin-top:6px">${escapeHtml(p.summary)}</p>
+          <span class="small" style="display:inline-block;margin-top:12px">Mở hồ sơ này ↗</span>
+        </button>`).join('')}
+      </div>
+    </div>
+  </div>
+
+  <p class="small muted" style="max-width:70ch">
+    Toàn bộ tính toán chạy trên thiết bị của bạn. Ứng dụng không có máy chủ và không gửi số liệu
+    tài chính của bạn đi đâu cả.
+  </p>
+</section>`;
+}
+
+// ======================================================================
+// src/ui/views/profileForm.js
+// ======================================================================
+
+
+const STEPS = ['Thu nhập và chi phí', 'Tài sản và nợ', 'Mục tiêu', 'Đặc điểm thu nhập'];
+
+function profileFormView(state) {
+  const p = state.profile;
+  const step = state.wizardStep;
+  return `
+<section class="view stack">
+  <div>
+    <p class="eyebrow">Bước ${step + 1} trên ${STEPS.length}</p>
+    <h1 style="margin-top:8px">${STEPS[step]}</h1>
+  </div>
+
+  <div class="shell-card">
+    <div class="shell-card__core">
+      ${[incomeStep, assetStep, goalStep, traitStep][step](p)}
+    </div>
+  </div>
+
+  <div class="row row--end">
+    ${step > 0 ? '<button class="btn btn--ghost" data-action="wizard-back">Quay lại</button>' : ''}
+    <button class="btn" data-action="wizard-next">
+      ${step === STEPS.length - 1 ? 'Xem hồ sơ' : 'Tiếp tục'}
+      <span class="btn__pip" aria-hidden="true">→</span>
+    </button>
+  </div>
+</section>`;
+}
+
+const moneyField = (name, label, value, hint = '') => `
+<div class="field">
+  <label for="f-${name}">${label}</label>
+  <input class="input" id="f-${name}" name="${name}" type="number" min="0" step="100000" value="${value || ''}" inputmode="numeric">
+  ${hint ? `<span class="hint">${hint}</span>` : ''}
+</div>`;
+
+function incomeStep(p) {
+  return `<div class="grid-2">
+    ${moneyField('income', 'Thu nhập ròng mỗi tháng', p.income, 'Số tiền thực nhận sau thuế và bảo hiểm')}
+    ${moneyField('essential', 'Chi phí thiết yếu mỗi tháng', p.essential, 'Thuê nhà, ăn uống, đi lại, điện nước, y tế')}
+    ${moneyField('discretionary', 'Chi tiêu linh hoạt mỗi tháng', p.discretionary, 'Giải trí, mua sắm không bắt buộc')}
+  </div>
+  <p class="small muted" style="margin-top:16px">
+    Chi phí thiết yếu và chi tiêu linh hoạt được tách riêng vì khi mất thu nhập, người ta cắt ngay
+    khoản linh hoạt nhưng vẫn phải trả khoản thiết yếu. Quỹ dự phòng chỉ tính trên phần thiết yếu.
+  </p>`;
+}
+
+function assetStep(p) {
+  const debt = p.debts[0] || { name: '', monthlyPayment: 0, remainingMonths: 0 };
+  return `<div class="grid-2">
+    ${moneyField('liquidAssets', 'Tài sản rút dùng được ngay', p.liquidAssets, 'Tiền mặt và tiền gửi không kỳ hạn')}
+  </div>
+  <h3 style="margin-top:24px">Khoản nợ đang trả</h3>
+  <p class="small muted" style="margin-top:4px">Để trống nếu bạn chưa có khoản vay nào.</p>
+  <div class="grid-3" style="margin-top:14px">
+    <div class="field">
+      <label for="f-debtName">Tên khoản vay</label>
+      <input class="input input--text" id="f-debtName" name="debtName" type="text"
+             value="${escapeHtml(debt.name)}" placeholder="Vay mua xe">
+    </div>
+    ${moneyField('debtPayment', 'Trả mỗi tháng', debt.monthlyPayment)}
+    ${moneyField('debtMonths', 'Số tháng còn lại', debt.remainingMonths)}
+  </div>`;
+}
+
+function goalStep(p) {
+  const g = [p.goals[0], p.goals[1]];
+  return `<p class="small muted">Khai báo tối đa hai mục tiêu. Tỷ trọng cho biết bạn muốn chia dòng tiền dư thế nào giữa chúng.</p>
+  ${[0, 1].map((i) => goalBlock(i, g[i])).join('<hr style="border:0;border-top:1px solid var(--line);margin:22px 0">')}`;
+}
+
+function goalBlock(index, goal = {}) {
+  const v = { name: '', target: 0, saved: 0, deadlineMonth: 12, allocWeight: index === 0 ? 0.6 : 0.4, ...goal };
+  return `
+  <h3 style="margin-top:${index === 0 ? '18px' : '0'}">Mục tiêu ${index + 1}</h3>
+  <div class="grid-3" style="margin-top:12px">
+    <div class="field">
+      <label for="g${index}-name">Tên mục tiêu</label>
+      <input class="input input--text" id="g${index}-name" name="g${index}name" type="text"
+             value="${escapeHtml(v.name)}" placeholder="${index === 0 ? 'Quỹ dự phòng' : 'Học chứng chỉ'}">
+    </div>
+    <div class="field">
+      <label for="g${index}-target">Số tiền cần đạt</label>
+      <input class="input" id="g${index}-target" name="g${index}target" type="number" min="0" step="1000000" value="${v.target || ''}">
+    </div>
+    <div class="field">
+      <label for="g${index}-saved">Đã tích luỹ</label>
+      <input class="input" id="g${index}-saved" name="g${index}saved" type="number" min="0" step="1000000" value="${v.saved || ''}">
+    </div>
+    <div class="field">
+      <label for="g${index}-deadline">Hạn mong muốn (tháng)</label>
+      <input class="input" id="g${index}-deadline" name="g${index}deadline" type="number" min="1" step="1" value="${v.deadlineMonth || ''}">
+    </div>
+    <div class="field">
+      <label for="g${index}-weight">Tỷ trọng dòng tiền dư (%)</label>
+      <input class="input" id="g${index}-weight" name="g${index}weight" type="number" min="0" max="100" step="5"
+             value="${Math.round((v.allocWeight || 0) * 100)}">
+      <span class="hint">Tổng hai mục tiêu sẽ được chuẩn hoá về 100%</span>
+    </div>
+  </div>`;
+}
+
+function traitStep(p) {
+  return `<div class="field" style="max-width:420px">
+    <label for="f-stability">Thu nhập của bạn có đều đặn không</label>
+    <select class="input input--text" id="f-stability" name="incomeStability">
+      <option value="stable" ${p.incomeStability === 'stable' ? 'selected' : ''}>Ổn định, tháng nào cũng gần như nhau</option>
+      <option value="variable" ${p.incomeStability === 'variable' ? 'selected' : ''}>Biến động, tuỳ tháng</option>
+    </select>
+    <span class="hint">Yếu tố này chiếm 10% trong điểm an toàn tài chính</span>
+  </div>`;
+}
+
+// ======================================================================
+// src/ui/views/dashboard.js
+// ======================================================================
+
+
+
+
+
+
+
+function dashboardView(state) {
+  const p = state.profile;
+  const b = baseline(p);
+  const goals = normaliseWeights(p.goals);
+
+  const runwayTone = b.runway >= ASSUMPTIONS.runwaySafe ? 'safe'
+    : b.runway >= ASSUMPTIONS.runwayCaution ? 'caution' : 'risky';
+  const dtiTone = b.dti <= ASSUMPTIONS.dtiSafe ? 'safe'
+    : b.dti <= ASSUMPTIONS.dtiCaution ? 'caution' : 'risky';
+  const surplusTone = b.surplus <= 0 ? 'risky' : b.savingsRate >= 0.2 ? 'safe' : 'caution';
+
+  const series = goals.map((g, i) => ({
+    name: g.name,
+    tone: i === 0 ? 'ink' : 'caution',
+    values: accumulationPath(g.saved, b.surplus * g.allocWeight, 24),
+  }));
+
+  return `
+<section class="view stack">
+  <div class="spread">
+    <div>
+      <p class="eyebrow">Hồ sơ tài chính</p>
+      <h1 style="margin-top:8px">Bức tranh hiện tại của bạn</h1>
+    </div>
+    <button class="btn btn--ghost" data-action="go" data-view="profile">Sửa hồ sơ</button>
+  </div>
+
+  <div class="metrics">
+    ${metric('Dòng tiền dư mỗi tháng', money(b.surplus), `Tỷ lệ tiết kiệm ${percent(b.savingsRate)}`, surplusTone)}
+    ${metric('Quỹ dự phòng', `${decimal(b.runway)} tháng`, runwayNote(b.runway), runwayTone)}
+    ${metric('Nghĩa vụ nợ', percent(b.dti), b.dti === 0 ? 'Chưa có khoản vay nào' : `${money(b.debtPayments)} mỗi tháng`, dtiTone)}
+    ${metric('Chi phí tối thiểu', money(b.minimumSpend), 'Mức cần để duy trì cuộc sống', 'ink')}
+  </div>
+
+  ${goals.length > 0 ? `
+  <div class="shell-card">
+    <div class="shell-card__core">
+      <div class="spread">
+        <h2>Đường tới mục tiêu nếu giữ nguyên nhịp hiện tại</h2>
+      </div>
+      <div style="margin-top:16px">${lineChart(series, { unit: 'money' })}</div>
+      ${legend(series)}
+      <div class="rows" style="margin-top:18px">
+        ${goals.map((g) => {
+          const eta = monthsToGoal(g.target, g.saved, b.surplus * g.allocWeight);
+          const late = !(eta <= g.deadlineMonth);
+          return `<div class="rows__item spread">
+            <div>
+              <strong>${escapeHtml(g.name)}</strong>
+              <p class="small muted" style="margin-top:2px">
+                Cần ${moneyShort(g.target)}, đã có ${moneyShort(g.saved)}, nhận ${percent(g.allocWeight, 0)} dòng tiền dư
+              </p>
+            </div>
+            <div style="text-align:right">
+              <div class="figure" style="font-weight:600">${monthsInt(eta)}</div>
+              <span class="chip chip--${late ? 'caution' : 'safe'}" style="margin-top:4px">
+                ${late ? `Trễ hạn ${g.deadlineMonth} tháng` : 'Kịp hạn'}
+              </span>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  </div>` : ''}
+
+  <div>
+    <h2>Bạn đang cân nhắc quyết định nào</h2>
+    <div class="grid-2" style="margin-top:16px">
+      ${DECISION_KINDS.map((k, i) => `
+      <button class="panel rise" data-action="pick-decision" data-kind="${k.id}"
+              style="text-align:left;cursor:pointer;animation-delay:${i * 0.05}s">
+        <h3>${k.name}</h3>
+        <p class="small muted" style="margin-top:6px">${k.blurb}</p>
+        <span class="small" style="display:inline-block;margin-top:12px">Ví dụ: ${k.example} ↗</span>
+      </button>`).join('')}
+    </div>
+  </div>
+</section>`;
+}
+
+function metric(label, value, note, tone) {
+  return `<div class="metric rise">
+    <div class="metric__label">${label}</div>
+    <div class="metric__value figure t-${tone}">${value}</div>
+    <div class="metric__note muted">${note}</div>
+  </div>`;
+}
+
+function runwayNote(runway) {
+  if (runway >= ASSUMPTIONS.runwaySafe) return 'Đạt mức an toàn 6 tháng';
+  if (runway >= ASSUMPTIONS.runwayCaution) return 'Chưa đạt mức an toàn 6 tháng';
+  return 'Dưới ngưỡng thận trọng 3 tháng';
+}
+
+// ======================================================================
+// src/ui/views/decision.js
+// ======================================================================
+
+
+
+
+
+function decisionView(state) {
+  const kind = DECISION_KINDS.find((k) => k.id === state.decisionKind) || DECISION_KINDS[0];
+  const forms = { purchase: purchaseForm, installment: installmentForm, allocation: allocationForm, savings: savingsForm };
+
+  return `
+<section class="view stack">
+  <div class="spread">
+    <div>
+      <p class="eyebrow">${kind.name}</p>
+      <h1 style="margin-top:8px;max-width:22ch">${headline(kind.id)}</h1>
+    </div>
+    <button class="btn btn--ghost" data-action="go" data-view="dashboard">Đổi nhóm quyết định</button>
+  </div>
+
+  <div class="shell-card">
+    <div class="shell-card__core">
+      ${forms[kind.id](state)}
+    </div>
+  </div>
+
+  <div class="row row--end">
+    <button class="btn" data-action="simulate">
+      Mô phỏng các phương án <span class="btn__pip" aria-hidden="true">↗</span>
+    </button>
+  </div>
+</section>`;
+}
+
+const headline = (id) => ({
+  purchase: 'Khoản chi này ảnh hưởng thế nào tới bạn',
+  installment: 'Gói trả góp nào thật sự rẻ hơn',
+  allocation: 'Chia dòng tiền dư thế nào cho hợp lý',
+  savings: 'Thay đổi mức tiết kiệm dịch chuyển mục tiêu bao xa',
+}[id]);
+
+const numberField = (name, label, value, step = 1000000, hint = '') => `
+<div class="field">
+  <label for="d-${name}">${label}</label>
+  <input class="input" id="d-${name}" name="${name}" type="number" min="0" step="${step}" value="${value}" inputmode="numeric">
+  ${hint ? `<span class="hint">${hint}</span>` : ''}
+</div>`;
+
+function purchaseForm() {
+  return `
+  <div class="grid-3">
+    ${numberField('price', 'Giá món hàng', 25000000)}
+    ${numberField('downPayment', 'Trả trước nếu chọn trả góp', 5000000)}
+    ${numberField('months', 'Kỳ hạn trả góp (tháng)', 12, 1)}
+    ${numberField('flatRate', 'Lãi phẳng người bán báo (%/tháng)', 1, 0.1, 'Con số cửa hàng thường ghi trên bảng giá')}
+    ${numberField('delayMonths', 'Nếu trì hoãn thì bao lâu (tháng)', 4, 1)}
+  </div>
+  <p class="small muted" style="margin-top:16px">
+    Công cụ sẽ dựng ba phương án để so sánh: trả thẳng, trả góp và trì hoãn. Phương án trì hoãn
+    được tính cả phần giá tăng theo lạm phát trong thời gian chờ.
+  </p>`;
+}
+
+function installmentForm() {
+  return `
+  <div class="grid-2">
+    ${numberField('price', 'Giá món hàng', 25000000)}
+    ${numberField('downPayment', 'Trả trước', 5000000)}
+  </div>
+  <h3 style="margin-top:24px">Các gói đang được chào</h3>
+  <div class="grid-2" style="margin-top:12px">
+    <div class="panel">
+      <h3 class="small">Gói A</h3>
+      <div class="grid-2" style="margin-top:10px">
+        ${numberField('monthsA', 'Kỳ hạn (tháng)', 6, 1)}
+        ${numberField('flatA', 'Lãi phẳng (%/tháng)', 0.8, 0.1)}
+      </div>
+    </div>
+    <div class="panel">
+      <h3 class="small">Gói B</h3>
+      <div class="grid-2" style="margin-top:10px">
+        ${numberField('monthsB', 'Kỳ hạn (tháng)', 12, 1)}
+        ${numberField('flatB', 'Lãi phẳng (%/tháng)', 1, 0.1)}
+      </div>
+    </div>
+  </div>`;
+}
+
+function allocationForm(state) {
+  const goals = normaliseWeights(state.profile.goals);
+  if (goals.length < 2) {
+    return `<p class="lede">Nhóm quyết định này cần ít nhất hai mục tiêu. Hãy quay lại hồ sơ và khai báo thêm một mục tiêu nữa.</p>
+    <div class="row" style="margin-top:16px"><button class="btn btn--ghost" data-action="go" data-view="profile">Bổ sung mục tiêu</button></div>`;
+  }
+  return `
+  <p class="lede">Ba cách chia dòng tiền dư ${money(baseline(state.profile).surplus)} mỗi tháng giữa
+  <strong>${escapeHtml(goals[0].name)}</strong> và <strong>${escapeHtml(goals[1].name)}</strong>.</p>
+  <div class="rows" style="margin-top:18px">
+    ${[[80, 20], [50, 50], [20, 80]].map(([a, bb]) => `
+    <div class="rows__item spread">
+      <span>Ưu tiên ${a >= bb ? escapeHtml(goals[0].name) : escapeHtml(goals[1].name)}</span>
+      <span class="figure muted">${a}% / ${bb}%</span>
+    </div>`).join('')}
+  </div>
+  <p class="small muted" style="margin-top:14px">Cách chia hiện tại của bạn là
+  ${percent(goals[0].allocWeight, 0)} / ${percent(goals[1].allocWeight, 0)} và cũng sẽ được đưa vào so sánh.</p>`;
+}
+
+function savingsForm() {
+  return `
+  <div class="grid-2">
+    ${numberField('savingsDelta', 'Muốn tiết kiệm thêm bao nhiêu mỗi tháng', 1000000, 100000,
+      'Số tiền cắt bớt từ chi tiêu linh hoạt để dồn vào mục tiêu')}
+  </div>
+  <p class="small muted" style="margin-top:16px">
+    Công cụ sẽ so sánh ba kịch bản: giữ nguyên, tiết kiệm thêm mức bạn nhập, và tiết kiệm thêm gấp đôi mức đó.
+  </p>`;
+}
+
+// ======================================================================
+// src/ui/views/compare.js
+// ======================================================================
+
+
+
+
+
+function compareView(state) {
+  const { results, installment } = state;
+  if (!results || results.length === 0) {
+    return '<section class="view"><p class="lede">Chưa có kết quả nào. Hãy quay lại và nhập một quyết định.</p></section>';
+  }
+
+  const cheapest = results.reduce((a, b) => (a.outcome.totalCash <= b.outcome.totalCash ? a : b));
+  const runwaySeries = results.map((r) => ({
+    name: r.label,
+    tone: r.score.band,
+    values: runwayPath(state.profile, r.outcome),
+  }));
+
+  return `
+<section class="view stack">
+  <div class="spread">
+    <div>
+      <p class="eyebrow">Kết quả mô phỏng</p>
+      <h1 style="margin-top:8px;max-width:24ch">Ba phương án, cùng một hồ sơ</h1>
+    </div>
+    <button class="btn btn--ghost" data-action="go" data-view="decision">Sửa phương án</button>
+  </div>
+
+  ${installment ? aprReveal(installment) : ''}
+
+  <div class="compare">
+    ${results.map((r, i) => optionCard(r, i, r.label === cheapest.label)).join('')}
+  </div>
+
+  <div class="shell-card">
+    <div class="shell-card__core">
+      <h2>Quỹ dự phòng trong 24 tháng tới</h2>
+      <p class="small muted" style="margin-top:6px">
+        Đường nét đứt là ngưỡng thận trọng ${ASSUMPTIONS.runwayCaution} tháng.
+      </p>
+      <div style="margin-top:16px">
+        ${lineChart(runwaySeries, { unit: 'months', guideAt: ASSUMPTIONS.runwayCaution, guideLabel: 'ngưỡng thận trọng' })}
+      </div>
+      ${legend(runwaySeries)}
+    </div>
+  </div>
+
+  <div class="panel">
+    <p class="small">
+      <strong>DeciFin không đưa ra lời khuyên tài chính.</strong>
+      Kết quả trên dựa trên số liệu bạn khai báo và các tham số mô hình được công bố tại
+      <button class="link-btn" data-action="go" data-view="assumptions"
+              style="background:none;border:0;padding:0;text-decoration:underline;cursor:pointer;font:inherit">trang giả định</button>.
+      Quyền quyết định cuối cùng thuộc về bạn.
+    </p>
+  </div>
+</section>`;
+}
+
+/** Ô phơi bày lãi suất thực. Đây là thứ ứng dụng ghi chép chi tiêu không làm được. */
+function aprReveal(inst) {
+  return `
+<div class="reveal-apr rise">
+  <div>
+    <div class="reveal-apr__k">Người bán quảng cáo</div>
+    <div class="reveal-apr__v figure muted">${percent(inst.advertisedApr, 1)}<span class="small">/năm</span></div>
+    <p class="small muted" style="margin-top:4px">Lãi phẳng ${percent(inst.advertisedApr / 12, 1)} mỗi tháng, quy đổi thẳng ra năm</p>
+  </div>
+  <div class="reveal-apr__arrow" aria-hidden="true">→</div>
+  <div>
+    <div class="reveal-apr__k">Lãi suất thực bạn đang trả</div>
+    <div class="reveal-apr__v figure t-risky">${percent(inst.trueApr, 2)}<span class="small">/năm</span></div>
+    <p class="small" style="margin-top:4px">
+      Gấp <strong>${decimal(inst.spread, 2)} lần</strong>, tức thêm ${money(inst.totalInterest)} tiền lãi
+    </p>
+  </div>
+</div>`;
+}
+
+function optionCard(result, index, isCheapest) {
+  const { outcome, score, messages, label, rank } = result;
+  const top = rank === 1;
+  const blocked = score.band === 'blocked';
+
+  return `
+<article class="option ${top ? 'option--top' : ''} ${blocked ? 'option--blocked' : ''} rise"
+         style="animation-delay:${index * 0.09}s">
+  <div class="option__core">
+    <div class="option__head">
+      <span class="option__rank">${rank}</span>
+      <div>
+        <div class="option__title">${escapeHtml(label)}</div>
+        <span class="chip chip--${score.band}" style="margin-top:6px">${BAND_LABEL[score.band]}</span>
+        ${isCheapest ? '<span class="chip" style="margin-top:6px;background:var(--surface-sunken);color:var(--muted)">Ít tiền mặt nhất</span>' : ''}
+      </div>
+      <div class="option__score">
+        <b class="figure t-${score.band}">${decimal(score.total)}</b>
+        <div class="small muted">điểm an toàn</div>
+      </div>
+    </div>
+
+    <div class="stats">
+      ${stat('Tổng tiền chi', money(outcome.totalCash))}
+      ${stat('Giá trị hiện tại', money(outcome.presentValue))}
+      ${stat('Quỹ dự phòng còn', `${decimal(outcome.runwayAfter)} tháng`)}
+      ${stat('Nghĩa vụ nợ', percent(outcome.dtiAfter))}
+    </div>
+
+    ${outcome.goals.length > 0 ? `
+    <div class="stats" style="margin-top:2px">
+      ${outcome.goals.map((g) => stat(
+        escapeHtml(g.name),
+        Number.isFinite(g.etaAfter) ? `${monthsInt(g.etaAfter)}${g.delayMonths > 0 ? ` (chậm ${g.delayMonths})` : ''}` : 'không đạt',
+      )).join('')}
+    </div>` : ''}
+
+    <ul class="notes">
+      ${messages.slice(0, 5).map((m) => `
+      <li class="note note--${m.severity}">
+        <span class="note__dot" aria-hidden="true"></span>
+        <span>${escapeHtml(m.text)}</span>
+      </li>`).join('')}
+    </ul>
+  </div>
+</article>`;
+}
+
+const stat = (k, v) => `<div class="stat"><div class="stat__k">${k}</div><div class="stat__v figure">${v}</div></div>`;
+
+/**
+ * Quỹ dự phòng theo tháng sau quyết định. Khoản trả góp kết thúc khi hết kỳ hạn
+ * nên đường biểu diễn sẽ dốc lên trở lại từ thời điểm đó.
+ */
+function runwayPath(profile, outcome) {
+  const path = [];
+  let liquid = outcome.liquidAfter;
+  const minimumSpend = profile.essential + (profile.income - profile.essential - profile.discretionary - outcome.surplusAfter);
+  const denominator = minimumSpend > 0 ? minimumSpend : profile.essential || 1;
+  for (let t = 0; t <= 24; t += 1) {
+    path.push(Math.max(liquid / denominator, 0));
+    liquid = Math.max(liquid + outcome.surplusAfter, 0);
+  }
+  return path;
+}
+
+// ======================================================================
+// src/ui/views/assumptions.js
+// ======================================================================
+
+
+
+
+const STATUS = {
+  unverified: { label: 'Nhóm tự đặt, chưa xác minh', cls: 'risky' },
+  convention: { label: 'Thông lệ quốc tế', cls: 'caution' },
+  design: { label: 'Lựa chọn thiết kế', cls: 'caution' },
+};
+
+function assumptionsView() {
+  return `
+<section class="view stack">
+  <div>
+    <p class="eyebrow">Minh bạch</p>
+    <h1 style="margin-top:8px;max-width:20ch">Mọi con số đều có nguồn gốc</h1>
+    <p class="lede" style="margin-top:14px">
+      Kết quả mô phỏng phụ thuộc vào các tham số dưới đây. Chúng tôi công bố cả những tham số do
+      nhóm tự đặt và chưa xác minh, vì giấu chúng đi sẽ khiến bạn tin vào kết quả nhiều hơn mức
+      đáng tin.
+    </p>
+  </div>
+
+  <div class="rows">
+    ${ASSUMPTION_NOTES.map((a) => {
+      const s = STATUS[a.status];
+      return `<div class="rows__item">
+        <div class="spread">
+          <strong>${escapeHtml(a.label)}</strong>
+          <span class="figure">${escapeHtml(a.value)}</span>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <span class="chip chip--${s.cls}">${s.label}</span>
+        </div>
+        <p class="small muted" style="margin-top:8px">${escapeHtml(a.note)}</p>
+      </div>`;
+    }).join('')}
+  </div>
+
+  <div class="shell-card">
+    <div class="shell-card__core">
+      <h2>Công cụ này không làm gì</h2>
+      <ul class="notes" style="margin-top:14px">
+        ${[
+          'Không phải tư vấn tài chính, tư vấn đầu tư hay khuyến nghị mua bán sản phẩm tài chính.',
+          'Không dự báo thu nhập tương lai. Mọi kịch bản giả định thu nhập giữ nguyên như bạn khai báo.',
+          'Không tính tới biến động thị trường, thay đổi lãi suất hay các cú sốc chi tiêu bất ngờ.',
+          'Không kết nối tài khoản ngân hàng và không truy cập lịch sử giao dịch của bạn.',
+          'Không lưu dữ liệu của bạn lên máy chủ nào. Hồ sơ chỉ nằm trong bộ nhớ trình duyệt này.',
+        ].map((t) => `<li class="note"><span class="note__dot" aria-hidden="true"></span><span>${t}</span></li>`).join('')}
+      </ul>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>Trọng số điểm an toàn tài chính</h3>
+    <div class="rows" style="margin-top:12px">
+      ${Object.entries({
+        liquidity: 'Thanh khoản, đo bằng số tháng quỹ dự phòng',
+        debt: 'Gánh nặng nợ trên thu nhập',
+        cashflow: 'Đệm dòng tiền còn lại',
+        goals: 'Tỷ lệ mục tiêu bị trễ hạn',
+        stability: 'Mức ổn định của thu nhập',
+      }).map(([key, desc]) => `
+      <div class="rows__item spread">
+        <span class="small">${desc}</span>
+        <span class="figure">${Math.round(WEIGHTS[key] * 100)}%</span>
+      </div>`).join('')}
+    </div>
+    <p class="small muted" style="margin-top:12px">
+      Bộ trọng số này do nhóm đặt ra, phản ánh quan điểm rằng với người 18 đến 25 tuổi, mất khả năng
+      ứng phó sự cố là rủi ro nghiêm trọng nhất. Nó không dựa trên chuẩn mực được công nhận nào và
+      sẽ được hiệu chỉnh khi có dữ liệu người dùng thực tế.
+    </p>
+  </div>
+
+  <div class="row">
+    <button class="btn btn--ghost" data-action="go" data-view="welcome">Về trang đầu</button>
+    <button class="btn btn--ghost" data-action="wipe">Xoá hồ sơ khỏi máy này</button>
+  </div>
+</section>`;
+}
+
+// ======================================================================
+// src/app.js
+// ======================================================================
+/**
+ * Điều phối ứng dụng: dựng chuỗi HTML cho màn hình hiện tại, gắn vào DOM, và
+ * bắt sự kiện bằng uỷ quyền ở gốc.
+ *
+ * Cách render bằng chuỗi được chọn có chủ đích: nó khiến mọi hàm dựng giao diện
+ * trở thành hàm thuần nhận trạng thái trả về chuỗi, nên kiểm thử được bằng Node
+ * mà không cần trình duyệt giả lập.
+ */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const VIEWS = {
+  welcome: welcomeView,
+  profile: profileFormView,
+  dashboard: dashboardView,
+  decision: decisionView,
+  compare: compareView,
+  assumptions: assumptionsView,
+};
+
+const STEP_LABELS = [
+  ['profile', 'Hồ sơ'],
+  ['dashboard', 'Chỉ số'],
+  ['decision', 'Quyết định'],
+  ['compare', 'So sánh'],
+];
+
+function mount(root) {
+  subscribe(() => render(root));
+  root.addEventListener('click', onClick);
+  applyTheme(readTheme() || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+
+  const saved = loadProfile();
+  if (saved && saved.income > 0) update({ profile: saved, view: 'dashboard' });
+  else render(root);
+}
+
+function render(root) {
+  const view = VIEWS[state.view] || welcomeView;
+  root.innerHTML = `
+    ${topbar()}
+    <main><div class="shell">${view(state)}</div></main>
+    <footer class="foot"><div class="shell">
+      DeciFin, bản MVP. Mã nguồn mở theo giấy phép MIT. Mọi tính toán chạy trên thiết bị của bạn.
+    </div></footer>`;
+  root.scrollIntoView({ block: 'start' });
+}
+
+function topbar() {
+  const index = STEP_LABELS.findIndex(([id]) => id === state.view);
+  return `
+<header class="topbar"><div class="shell topbar__inner">
+  <button class="brand" data-action="go" data-view="welcome" style="background:none;border:0;cursor:pointer">
+    <span class="brand__mark" aria-hidden="true">D</span> DeciFin
+  </button>
+  <nav class="steps" aria-label="Tiến trình">
+    ${STEP_LABELS.map(([id, label], i) => `
+      <span class="steps__item" aria-current="${id === state.view}">${i + 1}. ${label}</span>`).join('')}
+  </nav>
+  <span class="topbar__spacer"></span>
+  <button class="btn btn--ghost" data-action="theme" aria-label="Đổi nền sáng tối"
+          style="padding:8px 14px">Nền</button>
+</div></header>`;
+}
+
+function onClick(event) {
+  const trigger = event.target.closest('[data-action]');
+  if (!trigger) return;
+  const { action } = trigger.dataset;
+
+  const handlers = {
+    go: () => update({ view: trigger.dataset.view }),
+    theme: toggleTheme,
+    'start-blank': () => update({ profile: structuredClone(EMPTY_PROFILE), wizardStep: 0, view: 'profile' }),
+    preset: () => loadPreset(trigger.dataset.id),
+    'wizard-back': () => update({ wizardStep: Math.max(state.wizardStep - 1, 0) }),
+    'wizard-next': advanceWizard,
+    'pick-decision': () => update({ decisionKind: trigger.dataset.kind, view: 'decision' }),
+    simulate: runSimulation,
+    wipe: wipeProfile,
+  };
+
+  if (handlers[action]) {
+    event.preventDefault();
+    handlers[action]();
+  }
+}
+
+function loadPreset(id) {
+  const preset = PRESETS.find((p) => p.id === id);
+  if (!preset) return;
+  const profile = structuredClone(preset.profile);
+  update({ profile, view: 'dashboard' });
+  saveProfile();
+}
+
+/** Đọc giá trị từ các ô đang hiển thị, gộp vào hồ sơ, rồi sang bước kế tiếp. */
+function advanceWizard() {
+  const read = (name) => document.querySelector(`[name="${name}"]`);
+  const value = (name) => (read(name) ? parseAmount(read(name).value) : undefined);
+  const text = (name) => (read(name) ? read(name).value.trim() : '');
+  const profile = structuredClone(state.profile);
+
+  if (state.wizardStep === 0) {
+    profile.income = value('income') ?? profile.income;
+    profile.essential = value('essential') ?? profile.essential;
+    profile.discretionary = value('discretionary') ?? profile.discretionary;
+  } else if (state.wizardStep === 1) {
+    profile.liquidAssets = value('liquidAssets') ?? profile.liquidAssets;
+    const payment = value('debtPayment') || 0;
+    profile.debts = payment > 0
+      ? [{ name: text('debtName') || 'Khoản vay', monthlyPayment: payment, remainingMonths: value('debtMonths') || 12 }]
+      : [];
+  } else if (state.wizardStep === 2) {
+    profile.goals = [0, 1]
+      .map((i) => ({
+        name: text(`g${i}name`) || (i === 0 ? 'Mục tiêu 1' : 'Mục tiêu 2'),
+        target: value(`g${i}target`) || 0,
+        saved: value(`g${i}saved`) || 0,
+        deadlineMonth: value(`g${i}deadline`) || 12,
+        allocWeight: (value(`g${i}weight`) || 0) / 100,
+      }))
+      .filter((g) => g.target > 0);
+    if (profile.goals.length > 0) profile.goals = normaliseWeights(profile.goals);
+  } else {
+    const select = read('incomeStability');
+    if (select) profile.incomeStability = select.value;
+  }
+
+  if (state.wizardStep === 3) {
+    const errors = validate(profile);
+    if (errors.length > 0) {
+      window.alert(errors.join('\n'));
+      return;
+    }
+    update({ profile, view: 'dashboard' });
+    saveProfile();
+    return;
+  }
+  update({ profile, wizardStep: state.wizardStep + 1 });
+}
+
+function runSimulation() {
+  const read = (name) => {
+    const el = document.querySelector(`[name="${name}"]`);
+    return el ? parseAmount(el.value) : 0;
+  };
+
+  let built;
+  try {
+    built = BUILDERS[state.decisionKind](read, state.profile);
+  } catch (error) {
+    if (error instanceof ScenarioError) { window.alert(error.message); return; }
+    throw error;
+  }
+
+  const results = built.scenarios
+    ? rankScenarios(built.scenarios, built.extras || {})
+    : rank(state.profile, built.events, built.extras || {});
+
+  update({ results, installment: built.installment || null, view: 'compare' });
+}
+
+function wipeProfile() {
+  if (!window.confirm('Xoá hồ sơ khỏi trình duyệt này?')) return;
+  clearProfile();
+  update({ profile: structuredClone(EMPTY_PROFILE), results: null, view: 'welcome' });
+}
+
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  writeTheme(theme);
+}
+
+function toggleTheme() {
+  applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+}
+
+mount(document.getElementById('app'));
+</script>
+</body>
+</html>

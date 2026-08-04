@@ -38,7 +38,7 @@ const headline = (id) => ({
   savings: 'Thay đổi mức tiết kiệm dịch chuyển mục tiêu bao xa',
 }[id]);
 
-const num = (name, label, value, step = 1000000, hint = '') => `
+const numberField = (name, label, value, step = 1000000, hint = '') => `
 <div class="field">
   <label for="d-${name}">${label}</label>
   <input class="input" id="d-${name}" name="${name}" type="number" min="0" step="${step}" value="${value}" inputmode="numeric">
@@ -48,11 +48,11 @@ const num = (name, label, value, step = 1000000, hint = '') => `
 function purchaseForm() {
   return `
   <div class="grid-3">
-    ${num('price', 'Giá món hàng', 25000000)}
-    ${num('downPayment', 'Trả trước nếu chọn trả góp', 5000000)}
-    ${num('months', 'Kỳ hạn trả góp (tháng)', 12, 1)}
-    ${num('flatRate', 'Lãi phẳng người bán báo (%/tháng)', 1, 0.1, 'Con số cửa hàng thường ghi trên bảng giá')}
-    ${num('delayMonths', 'Nếu trì hoãn thì bao lâu (tháng)', 4, 1)}
+    ${numberField('price', 'Giá món hàng', 25000000)}
+    ${numberField('downPayment', 'Trả trước nếu chọn trả góp', 5000000)}
+    ${numberField('months', 'Kỳ hạn trả góp (tháng)', 12, 1)}
+    ${numberField('flatRate', 'Lãi phẳng người bán báo (%/tháng)', 1, 0.1, 'Con số cửa hàng thường ghi trên bảng giá')}
+    ${numberField('delayMonths', 'Nếu trì hoãn thì bao lâu (tháng)', 4, 1)}
   </div>
   <p class="small muted" style="margin-top:16px">
     Công cụ sẽ dựng ba phương án để so sánh: trả thẳng, trả góp và trì hoãn. Phương án trì hoãn
@@ -63,23 +63,23 @@ function purchaseForm() {
 function installmentForm() {
   return `
   <div class="grid-2">
-    ${num('price', 'Giá món hàng', 25000000)}
-    ${num('downPayment', 'Trả trước', 5000000)}
+    ${numberField('price', 'Giá món hàng', 25000000)}
+    ${numberField('downPayment', 'Trả trước', 5000000)}
   </div>
   <h3 style="margin-top:24px">Các gói đang được chào</h3>
   <div class="grid-2" style="margin-top:12px">
     <div class="panel">
       <h3 class="small">Gói A</h3>
       <div class="grid-2" style="margin-top:10px">
-        ${num('monthsA', 'Kỳ hạn (tháng)', 6, 1)}
-        ${num('flatA', 'Lãi phẳng (%/tháng)', 0.8, 0.1)}
+        ${numberField('monthsA', 'Kỳ hạn (tháng)', 6, 1)}
+        ${numberField('flatA', 'Lãi phẳng (%/tháng)', 0.8, 0.1)}
       </div>
     </div>
     <div class="panel">
       <h3 class="small">Gói B</h3>
       <div class="grid-2" style="margin-top:10px">
-        ${num('monthsB', 'Kỳ hạn (tháng)', 12, 1)}
-        ${num('flatB', 'Lãi phẳng (%/tháng)', 1, 0.1)}
+        ${numberField('monthsB', 'Kỳ hạn (tháng)', 12, 1)}
+        ${numberField('flatB', 'Lãi phẳng (%/tháng)', 1, 0.1)}
       </div>
     </div>
   </div>`;
@@ -108,7 +108,7 @@ function allocationForm(state) {
 function savingsForm() {
   return `
   <div class="grid-2">
-    ${num('savingsDelta', 'Muốn tiết kiệm thêm bao nhiêu mỗi tháng', 1000000, 100000,
+    ${numberField('savingsDelta', 'Muốn tiết kiệm thêm bao nhiêu mỗi tháng', 1000000, 100000,
       'Số tiền cắt bớt từ chi tiêu linh hoạt để dồn vào mục tiêu')}
   </div>
   <p class="small muted" style="margin-top:16px">

@@ -28,7 +28,7 @@ export function profileFormView(state) {
 </section>`;
 }
 
-const num = (name, label, value, hint = '') => `
+const moneyField = (name, label, value, hint = '') => `
 <div class="field">
   <label for="f-${name}">${label}</label>
   <input class="input" id="f-${name}" name="${name}" type="number" min="0" step="100000" value="${value || ''}" inputmode="numeric">
@@ -37,9 +37,9 @@ const num = (name, label, value, hint = '') => `
 
 function incomeStep(p) {
   return `<div class="grid-2">
-    ${num('income', 'Thu nhập ròng mỗi tháng', p.income, 'Số tiền thực nhận sau thuế và bảo hiểm')}
-    ${num('essential', 'Chi phí thiết yếu mỗi tháng', p.essential, 'Thuê nhà, ăn uống, đi lại, điện nước, y tế')}
-    ${num('discretionary', 'Chi tiêu linh hoạt mỗi tháng', p.discretionary, 'Giải trí, mua sắm không bắt buộc')}
+    ${moneyField('income', 'Thu nhập ròng mỗi tháng', p.income, 'Số tiền thực nhận sau thuế và bảo hiểm')}
+    ${moneyField('essential', 'Chi phí thiết yếu mỗi tháng', p.essential, 'Thuê nhà, ăn uống, đi lại, điện nước, y tế')}
+    ${moneyField('discretionary', 'Chi tiêu linh hoạt mỗi tháng', p.discretionary, 'Giải trí, mua sắm không bắt buộc')}
   </div>
   <p class="small muted" style="margin-top:16px">
     Chi phí thiết yếu và chi tiêu linh hoạt được tách riêng vì khi mất thu nhập, người ta cắt ngay
@@ -50,7 +50,7 @@ function incomeStep(p) {
 function assetStep(p) {
   const debt = p.debts[0] || { name: '', monthlyPayment: 0, remainingMonths: 0 };
   return `<div class="grid-2">
-    ${num('liquidAssets', 'Tài sản rút dùng được ngay', p.liquidAssets, 'Tiền mặt và tiền gửi không kỳ hạn')}
+    ${moneyField('liquidAssets', 'Tài sản rút dùng được ngay', p.liquidAssets, 'Tiền mặt và tiền gửi không kỳ hạn')}
   </div>
   <h3 style="margin-top:24px">Khoản nợ đang trả</h3>
   <p class="small muted" style="margin-top:4px">Để trống nếu bạn chưa có khoản vay nào.</p>
@@ -60,8 +60,8 @@ function assetStep(p) {
       <input class="input input--text" id="f-debtName" name="debtName" type="text"
              value="${escapeHtml(debt.name)}" placeholder="Vay mua xe">
     </div>
-    ${num('debtPayment', 'Trả mỗi tháng', debt.monthlyPayment)}
-    ${num('debtMonths', 'Số tháng còn lại', debt.remainingMonths)}
+    ${moneyField('debtPayment', 'Trả mỗi tháng', debt.monthlyPayment)}
+    ${moneyField('debtMonths', 'Số tháng còn lại', debt.remainingMonths)}
   </div>`;
 }
 
