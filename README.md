@@ -75,6 +75,15 @@ npm test           # 51 phép kiểm thử, dùng node:test có sẵn
 
 Yêu cầu duy nhất: Node phiên bản 20 trở lên.
 
+### Bản một tệp, không cần cài gì
+
+```bash
+node tools/build_standalone.js    # tạo decifin-standalone.html
+```
+
+Tệp sinh ra chạy độc lập: bấm đúp mở bằng trình duyệt là dùng được, không cần
+Node, không cần máy chủ. Tiện khi gửi cho người khác xem thử.
+
 ## Kiến trúc
 
 ![Kiến trúc engine tách rời khỏi giao diện](./docs/images/architecture.png)
