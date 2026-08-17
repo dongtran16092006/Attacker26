@@ -17,6 +17,7 @@ export function welcomeView() {
         Tạo hồ sơ của tôi <span class="btn__pip" aria-hidden="true">↗</span>
       </button>
       <button class="btn btn--ghost" data-action="go" data-view="assumptions">Xem giả định của mô hình</button>
+      <button class="btn btn--ghost" data-action="go" data-view="account">Tài khoản (tuỳ chọn)</button>
     </div>
   </div>
 
@@ -28,19 +29,19 @@ export function welcomeView() {
       </div>
       <div class="grid-3" style="margin-top:18px">
         ${PRESETS.map((p, i) => `
-        <button class="panel rise" data-action="preset" data-id="${p.id}"
-                style="text-align:left;cursor:pointer;animation-delay:${0.12 + i * 0.06}s">
+        <button class="panel panel--action rise" data-action="preset" data-id="${p.id}"
+                style="animation-delay:${0.12 + i * 0.06}s">
           <h3>${escapeHtml(p.name)}</h3>
           <p class="small muted" style="margin-top:6px">${escapeHtml(p.summary)}</p>
-          <span class="small" style="display:inline-block;margin-top:12px">Mở hồ sơ này ↗</span>
+          <span class="small" style="display:inline-block;margin-top:12px">Mở hồ sơ này <span class="go" aria-hidden="true">↗</span></span>
         </button>`).join('')}
       </div>
     </div>
   </div>
 
   <p class="small muted" style="max-width:70ch">
-    Toàn bộ tính toán chạy trên thiết bị của bạn. Ứng dụng không có máy chủ và không gửi số liệu
-    tài chính của bạn đi đâu cả.
+    Toàn bộ tính toán chạy trên thiết bị của bạn. Mặc định ứng dụng không gửi số liệu tài chính
+    của bạn đi đâu cả — trừ khi bạn chủ động bật mục "Tài khoản" để đồng bộ giữa nhiều thiết bị.
   </p>
 </section>`;
 }

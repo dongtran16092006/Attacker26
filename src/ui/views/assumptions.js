@@ -45,8 +45,11 @@ export function assumptionsView() {
           'Không phải tư vấn tài chính, tư vấn đầu tư hay khuyến nghị mua bán sản phẩm tài chính.',
           'Không dự báo thu nhập tương lai. Mọi kịch bản giả định thu nhập giữ nguyên như bạn khai báo.',
           'Không tính tới biến động thị trường, thay đổi lãi suất hay các cú sốc chi tiêu bất ngờ.',
-          'Không kết nối tài khoản ngân hàng và không truy cập lịch sử giao dịch của bạn.',
-          'Không lưu dữ liệu của bạn lên máy chủ nào. Hồ sơ chỉ nằm trong bộ nhớ trình duyệt này.',
+          'Không tự kết nối ngân hàng hay đọc lịch sử giao dịch nào — trừ khi bạn chủ động bật ' +
+            'mục "Tài khoản" và bấm nút nhập dữ liệu, và ngay cả lúc đó dữ liệu ngân hàng vẫn là ' +
+            'dữ liệu mô phỏng, không phải kết nối thật.',
+          'Không tự lưu dữ liệu lên máy chủ nào. Hồ sơ chỉ nằm trong bộ nhớ trình duyệt này, trừ ' +
+            'khi bạn chủ động đăng nhập và bấm đồng bộ ở mục "Tài khoản".',
         ].map((t) => `<li class="note"><span class="note__dot" aria-hidden="true"></span><span>${t}</span></li>`).join('')}
       </ul>
     </div>
@@ -78,5 +81,11 @@ export function assumptionsView() {
     <button class="btn btn--ghost" data-action="go" data-view="welcome">Về trang đầu</button>
     <button class="btn btn--ghost" data-action="wipe">Xoá hồ sơ khỏi máy này</button>
   </div>
+
+  <p class="small muted" style="max-width:70ch">
+    DeciFin là công cụ hỗ trợ ra quyết định dựa trên các giả định do bạn khai báo và các tham số mô
+    hình được công bố công khai ở trên. Công cụ không phải là tư vấn tài chính, tư vấn đầu tư hay
+    khuyến nghị mua bán sản phẩm tài chính. Quyền quyết định cuối cùng thuộc về bạn.
+  </p>
 </section>`;
 }

@@ -1,7 +1,7 @@
 import { BAND_LABEL } from '../../engine/scoring.js';
 import { ASSUMPTIONS } from '../../engine/config.js';
-import { lineChart, legend } from '../components/chart.js';
-import { money, percent, decimal, monthsInt, escapeHtml } from '../format.js';
+import { lineChart, legend, chartTable } from '../components/chart.js';
+import { money, percent, decimal, runwayMonths, monthsInt, escapeHtml } from '../format.js';
 
 export function compareView(state) {
   const { results, installment } = state;
@@ -36,12 +36,17 @@ export function compareView(state) {
     <div class="shell-card__core">
       <h2>Quỹ dự phòng trong 24 tháng tới</h2>
       <p class="small muted" style="margin-top:6px">
-        Đường nét đứt là ngưỡng thận trọng ${ASSUMPTIONS.runwayCaution} tháng.
+        Vùng tô nhạt nằm dưới ngưỡng thận trọng ${ASSUMPTIONS.runwayCaution} tháng.
+        Rê chuột dọc biểu đồ để đọc giá trị của cả ba phương án tại cùng một tháng.
       </p>
       <div style="margin-top:16px">
-        ${lineChart(runwaySeries, { unit: 'months', guideAt: ASSUMPTIONS.runwayCaution, guideLabel: 'ngưỡng thận trọng' })}
+        ${lineChart(runwaySeries, {
+          id: 'runway', unit: 'months', fillFirst: true,
+          guideAt: ASSUMPTIONS.runwayCaution, guideLabel: 'ngưỡng thận trọng',
+        })}
       </div>
       ${legend(runwaySeries)}
+      ${chartTable(runwaySeries, 'months')}
     </div>
   </div>
 
@@ -57,19 +62,30 @@ export function compareView(state) {
 </section>`;
 }
 
-/** Ô phơi bày lãi suất thực. Đây là thứ ứng dụng ghi chép chi tiêu không làm được. */
+/**
+ * Ô phơi bày lãi suất thực. Đây là thứ ứng dụng ghi chép chi tiêu không làm được,
+ * và là chỗ người xem dừng mắt lâu nhất.
+ *
+ * Hai con số chạy lên từ 0 chứ không hiện sẵn. Lý do không phải để cho đẹp: khi
+ * hai con số cùng chạy cạnh nhau, mắt tự so sánh tốc độ và thấy ngay con số bên
+ * phải vượt xa con số bên trái. Đó chính là điều cần nói.
+ */
 function aprReveal(inst) {
   return `
 <div class="reveal-apr rise">
   <div>
     <div class="reveal-apr__k">Người bán quảng cáo</div>
-    <div class="reveal-apr__v figure muted">${percent(inst.advertisedApr, 1)}<span class="small">/năm</span></div>
+    <div class="reveal-apr__v figure muted">
+      <span data-count="${inst.advertisedApr}" data-count-kind="pct1">${percent(inst.advertisedApr, 1)}</span><span class="small">/năm</span>
+    </div>
     <p class="small muted" style="margin-top:4px">Lãi phẳng ${percent(inst.advertisedApr / 12, 1)} mỗi tháng, quy đổi thẳng ra năm</p>
   </div>
   <div class="reveal-apr__arrow" aria-hidden="true">→</div>
   <div>
     <div class="reveal-apr__k">Lãi suất thực bạn đang trả</div>
-    <div class="reveal-apr__v figure t-risky">${percent(inst.trueApr, 2)}<span class="small">/năm</span></div>
+    <div class="reveal-apr__v figure t-risky">
+      <span data-count="${inst.trueApr}" data-count-kind="pct2">${percent(inst.trueApr, 2)}</span><span class="small">/năm</span>
+    </div>
     <p class="small" style="margin-top:4px">
       Gấp <strong>${decimal(inst.spread, 2)} lần</strong>, tức thêm ${money(inst.totalInterest)} tiền lãi
     </p>
@@ -93,16 +109,19 @@ function optionCard(result, index, isCheapest) {
         <span class="chip chip--${score.band}" style="margin-top:6px">${BAND_LABEL[score.band]}</span>
         ${isCheapest ? '<span class="chip" style="margin-top:6px;background:var(--surface-sunken);color:var(--muted)">Ít tiền mặt nhất</span>' : ''}
       </div>
-      <div class="option__score">
-        <b class="figure t-${score.band}">${decimal(score.total)}</b>
-        <div class="small muted">điểm an toàn</div>
+      <div class="option__score t-${score.band}">
+        <b class="figure"><span data-count="${score.total}" data-count-kind="dec1">${decimal(score.total)}</span></b>
+        <div class="small muted">điểm an toàn trên 100</div>
+        <div class="meter" role="img" aria-label="Điểm ${decimal(score.total)} trên 100">
+          <span class="meter__fill" style="--at:${(score.total / 100).toFixed(3)}"></span>
+        </div>
       </div>
     </div>
 
     <div class="stats">
       ${stat('Tổng tiền chi', money(outcome.totalCash))}
       ${stat('Giá trị hiện tại', money(outcome.presentValue))}
-      ${stat('Quỹ dự phòng còn', `${decimal(outcome.runwayAfter)} tháng`)}
+      ${stat('Quỹ dự phòng còn', runwayMonths(outcome.runwayAfter))}
       ${stat('Nghĩa vụ nợ', percent(outcome.dtiAfter))}
     </div>
 

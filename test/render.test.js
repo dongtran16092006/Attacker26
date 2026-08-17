@@ -6,6 +6,7 @@ import { decisionView } from '../src/ui/views/decision.js';
 import { compareView } from '../src/ui/views/compare.js';
 import { assumptionsView } from '../src/ui/views/assumptions.js';
 import { profileFormView } from '../src/ui/views/profileForm.js';
+import { accountView } from '../src/ui/views/account.js';
 import { escapeHtml } from '../src/ui/format.js';
 import { analyseInstallment } from '../src/engine/finance.js';
 import { makeEvent, rank } from '../src/engine/index.js';
@@ -45,6 +46,7 @@ test('mọi màn hình dựng ra chuỗi HTML không rỗng', () => {
     dashboard: dashboardView(baseState),
     decision: decisionView(baseState),
     assumptions: assumptionsView(baseState),
+    account: accountView(baseState),
   };
   for (const [name, html] of Object.entries(screens)) {
     assert.ok(html.length > 200, `${name} quá ngắn`);
@@ -103,10 +105,29 @@ test('hồ sơ rỗng không làm vỡ bảng chỉ số', () => {
 });
 
 test('thẻ mở và thẻ đóng cân bằng trên mọi màn hình', () => {
-  for (const html of [welcomeView(baseState), dashboardView(baseState), assumptionsView(baseState)]) {
+  const loggedIn = { ...baseState, account: { token: 't', email: 'a@b.com' }, accountStatus: 'Đã đồng bộ.' };
+  for (const html of [
+    welcomeView(baseState),
+    dashboardView(baseState),
+    assumptionsView(baseState),
+    accountView(baseState),
+    accountView(loggedIn),
+  ]) {
     const { open, close } = balanced(html);
     assert.equal(open, close, `lệch thẻ: mở ${open}, đóng ${close}`);
   }
+});
+
+test('màn tài khoản chuyển đúng giữa trạng thái đăng nhập và chưa đăng nhập', () => {
+  const loggedOut = accountView(baseState);
+  assert.ok(loggedOut.includes('data-action="account-register"'));
+  assert.ok(!loggedOut.includes('data-action="account-logout"'));
+
+  const loggedIn = accountView({ ...baseState, account: { token: 't', email: '<script>x</script>@b.com' } });
+  assert.ok(loggedIn.includes('data-action="account-logout"'));
+  assert.ok(!loggedIn.includes('data-action="account-register"'));
+  assert.ok(!loggedIn.includes('<script>x</script>'), 'email chưa được thoát ký tự');
+  assert.ok(loggedIn.includes('&lt;script&gt;'));
 });
 
 test('tên mục tiêu do người dùng nhập được thoát ký tự trước khi ghép vào HTML', () => {

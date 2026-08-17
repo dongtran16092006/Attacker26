@@ -20,8 +20,15 @@ Lý do: đây là công cụ tài chính chạy trên máy người dùng. Mỗi
 là một bề mặt rủi ro chuỗi cung ứng, và với thứ đọc số liệu thu nhập của người
 khác thì cái giá đó không đáng.
 
-Cái phải đánh đổi: biểu đồ phải tự vẽ. Hoá ra chỉ tốn 90 dòng trong
+Cái phải đánh đổi: biểu đồ phải tự vẽ. Hoá ra chỉ tốn khoảng 190 dòng trong
 `src/ui/components/chart.js` vì cả ứng dụng chỉ cần đúng một loại đồ thị đường.
+
+Biểu đồ chia đôi có chủ đích: phần hình học nằm trong SVG với hệ toạ độ vuông
+1000x1000 kéo giãn cho vừa khung, còn toàn bộ chữ và chấm dựng bằng HTML đặt
+chồng lên theo toạ độ phần trăm. Lý do là SVG co theo bề ngang khung chứa, nên
+trên điện thoại cả hình bị thu còn khoảng 38% và chữ 11px hiển thị ra chưa tới
+7px. Tách chữ ra HTML thì nó giữ đúng cỡ thật ở mọi bề ngang màn hình, còn nét
+vẽ giữ nguyên độ dày nhờ `vector-effect="non-scaling-stroke"`.
 
 ### 2. Không máy chủ, không cơ sở dữ liệu
 
@@ -97,7 +104,7 @@ hồ sơ.
 
 ## Kiểm thử
 
-51 phép kiểm thử, chia theo tầng:
+57 phép kiểm thử, chia theo tầng:
 
 | Tệp | Bao phủ |
 |---|---|
@@ -106,8 +113,9 @@ hồ sơ.
 | `test/engine.test.js` | mô phỏng, chấm điểm, chặn cứng, xếp hạng |
 | `test/scenarios.test.js` | dựng phương án cho cả bốn nhóm quyết định |
 | `test/render.test.js` | sáu màn hình dựng ra HTML hợp lệ và an toàn |
+| `test/format.test.js` | đọc số người dùng gõ, định dạng hiển thị tiếng Việt |
 
-Ba loại kiểm thử đáng chú ý vì chúng bắt được lỗi mà kiểm tra từng giá trị không bắt được:
+Bốn loại kiểm thử đáng chú ý vì chúng bắt được lỗi mà kiểm tra từng giá trị không bắt được:
 
 - **Kiểm tra ngược.** Lấy lãi suất thực vừa tính, đưa vào công thức dư nợ giảm
   dần, phải ra lại đúng khoản trả ban đầu.
@@ -116,6 +124,11 @@ Ba loại kiểm thử đáng chú ý vì chúng bắt được lỗi mà kiểm
 - **Thoát ký tự.** Nhét chuỗi `<img src=x onerror=...>` vào tên mục tiêu và kiểm
   tra nó không lọt nguyên vào HTML. Phép kiểm thử này từng bắt được một lỗi thật
   ở chú giải biểu đồ.
+- **Đọc số người dùng gõ.** Ô `<input type="number">` của trình duyệt luôn trả về
+  dấu chấm thập phân, trong khi người Việt gõ tiền dùng dấu chấm ngăn nghìn. Hai
+  quy ước này từng va nhau: chuỗi `"0.8"` bị hiểu thành `8`, làm nhóm quyết định
+  trả góp tính sai gấp mười lần mà kết quả vẫn trông hợp lý. Đây là loại lỗi chỉ
+  lộ ra khi có phép kiểm thử khoá đúng từng chuỗi đầu vào.
 
 ## Hệ thiết kế
 
@@ -133,19 +146,38 @@ quan trọng dùng cấu trúc lồng vỏ ngoài mềm bọc lõi trong sắc n
 **Phông chữ Be Vietnam Pro**, chọn vì được thiết kế riêng cho dấu tiếng Việt.
 Tải qua Google Fonts kèm chuỗi phông hệ thống dự phòng, nên mất mạng vẫn đọc được.
 
-**Chuyển động chỉ ở nơi nó truyền tải thông tin**: thứ tự xếp hạng hiện dần theo
-độ trễ, đường biểu đồ vẽ dần để thể hiện diễn tiến thời gian, nút lún xuống khi
-bấm. Toàn bộ chỉ dùng `transform` và `opacity`, và tắt hết khi người dùng bật
-`prefers-reduced-motion`.
+**Chuyển động chỉ ở nơi nó truyền tải thông tin.** Mỗi hiệu ứng trong sản phẩm
+đều nói được một câu tại sao nó tồn tại:
+
+| Chuyển động | Nó nói điều gì |
+|---|---|
+| Thứ tự xếp hạng hiện dần theo độ trễ | thứ tự đọc, phương án nào nên nhìn trước |
+| Biểu đồ hiện dần từ trái sang phải | trục hoành là thời gian, hướng chuyển động trùng hướng dữ liệu chảy |
+| Vạch màu bên trái thẻ chỉ số mọc xuống | đèn giao thông, thấy được từ xa mà không cần đọc chữ số |
+| Lãi suất thực và điểm an toàn chạy từ 0 lên | đây là kết quả được tính ra, không phải chữ in sẵn |
+| Vạch tiến trình biểu mẫu trượt sang | còn mấy bước nữa thì xong |
+| Nút lún xuống khi bấm | máy đã nhận thao tác |
+| Đổi nền sáng tối hoà hai ảnh | cùng một trang, chỉ đổi lớp áo, mắt không mất chỗ đang đọc |
+
+Toàn bộ chỉ dùng `transform` và `opacity`, không có vòng lặp vô hạn nào, và tắt
+hết khi người dùng bật `prefers-reduced-motion`.
+
+Lớp chuyển động nằm riêng trong `src/ui/motion.js`, chạy sau khi màn hình đã
+dựng xong. Đây không phải chuyện sắp xếp cho gọn: các hàm dựng giao diện phải
+giữ nguyên tính thuần để bộ kiểm thử chạy được trong Node. Hệ quả kèm theo là
+HTML dựng ra đã chứa sẵn con số cuối cùng, nên nếu phần chuyển động không chạy
+được thì sản phẩm vẫn hiển thị đúng số. Chuyển động là lớp phủ, không phải điều
+kiện. Trang `docs/preview.html` là bằng chứng: nó chỉ có HTML và CSS, không chạy
+`motion.js`, mà mọi con số vẫn đúng.
 
 ## Những chỗ sẽ phải đổi trước
 
 Ghi lại để người tiếp nhận biết đâu là điểm yếu đã biết:
 
 1. **Render lại toàn màn hình** sẽ thành nút thắt nếu thêm danh sách dài.
-2. **`window.alert` cho thông báo lỗi** là giải pháp tạm, cần thay bằng thông báo
-   ngay tại ô nhập liệu.
-3. **Chỉ hỗ trợ hai mục tiêu và một khoản nợ** trong biểu mẫu, dù engine không
+2. **Chỉ hỗ trợ hai mục tiêu và một khoản nợ** trong biểu mẫu, dù engine không
    giới hạn số lượng.
-4. **Chưa có định tuyến theo URL**, nên không chia sẻ được liên kết tới một kết
+3. **Chưa có định tuyến theo URL**, nên không chia sẻ được liên kết tới một kết
    quả cụ thể.
+4. **Vạch dò trên biểu đồ chỉ đọc bằng chuột và chạm**, chưa đi được bằng bàn
+   phím. Người dùng bàn phím hiện đọc số qua bảng số liệu mở ra dưới biểu đồ.

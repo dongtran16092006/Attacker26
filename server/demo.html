@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DeciFin — trang test backend</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; max-width: 840px; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; }
+  h1 { font-size: 1.4rem; }
+  h2 { font-size: 1.1rem; margin-top: 2.2rem; border-top: 1px solid #8884; padding-top: 1rem; }
+  section { margin-bottom: 1rem; }
+  label { display: block; font-size: 0.85rem; opacity: 0.8; margin-top: 0.5rem; }
+  input, select { width: 100%; box-sizing: border-box; padding: 0.4rem; margin-top: 0.15rem; font-size: 0.95rem; }
+  button { margin-top: 0.7rem; padding: 0.5rem 1rem; cursor: pointer; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+  pre { background: #8882; padding: 0.7rem; border-radius: 6px; overflow-x: auto; white-space: pre-wrap; word-break: break-word; font-size: 0.82rem; }
+  .status { font-size: 0.85rem; padding: 0.4rem 0.6rem; border-radius: 4px; margin-top: 0.5rem; }
+  .status.ok { background: #2a92; }
+  .status.err { background: #e442; }
+  .disclaimer { font-size: 0.8rem; opacity: 0.75; font-style: italic; }
+  .token-box { font-size: 0.75rem; word-break: break-all; opacity: 0.7; }
+</style>
+</head>
+<body>
+<h1>DeciFin — trang test backend</h1>
+<p class="disclaimer">Trang tối giản để bấm thử API, không phải giao diện sản phẩm thật (giao diện thật ở <code>src/ui</code>, hiện chạy độc lập với localStorage). Dữ liệu ngân hàng ở bước "Nhập từ ngân hàng" là mô phỏng, không phải kết nối thật.</p>
+
+<h2>1. Tài khoản</h2>
+<section>
+  <div class="row">
+    <div>
+      <label>Email</label>
+      <input id="email" type="email" value="test@decifin.dev">
+    </div>
+    <div>
+      <label>Mật khẩu</label>
+      <input id="password" type="password" value="mat-khau-du-dai">
+    </div>
+  </div>
+  <button id="btnRegister">Đăng ký</button>
+  <button id="btnLogin">Đăng nhập</button>
+  <button id="btnDeleteAccount">Xoá tài khoản</button>
+  <div class="token-box">Token: <span id="tokenView">(chưa đăng nhập)</span></div>
+  <div id="authStatus"></div>
+</section>
+
+<h2>2. Hồ sơ tài chính</h2>
+<section>
+  <button id="btnImportBank">Nhập từ ngân hàng mô phỏng</button>
+  <button id="btnLoadProfile">Tải hồ sơ hiện có</button>
+  <div class="row">
+    <div><label>Thu nhập / tháng</label><input id="income" type="number" value="12000000"></div>
+    <div><label>Chi phí thiết yếu / tháng</label><input id="essential" type="number" value="6500000"></div>
+    <div><label>Chi tiêu linh hoạt / tháng</label><input id="discretionary" type="number" value="2000000"></div>
+    <div><label>Tài sản thanh khoản</label><input id="liquidAssets" type="number" value="25000000"></div>
+  </div>
+  <button id="btnSaveProfile">Lưu hồ sơ</button>
+  <div id="profileStatus"></div>
+</section>
+
+<h2>3. Mô phỏng một quyết định</h2>
+<section>
+  <label>Tên phương án</label>
+  <input id="eventLabel" value="Trả thẳng toàn bộ">
+  <div class="row">
+    <div><label>Chi ngay (upfront)</label><input id="eventUpfront" type="number" value="25000000"></div>
+    <div><label>Chi đều mỗi tháng (recurring)</label><input id="eventRecurring" type="number" value="0"></div>
+    <div><label>Số tháng trả đều</label><input id="eventRecurringMonths" type="number" value="0"></div>
+    <div><label>Trì hoãn (tháng)</label><input id="eventDelayMonths" type="number" value="0"></div>
+    <div><label>Số tiền chi sau trì hoãn</label><input id="eventDelayed" type="number" value="0"></div>
+  </div>
+  <button id="btnEvaluate">Mô phỏng</button>
+</section>
+
+<h2>Kết quả thô (JSON)</h2>
+<pre id="output">(chưa có)</pre>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let token = localStorage.getItem('decifin_demo_token') || '';
+
+function renderToken() {
+  $('tokenView').textContent = token ? token.slice(0, 16) + '…' : '(chưa đăng nhập)';
+}
+renderToken();
+
+function show(el, ok, msg) {
+  el.textContent = msg;
+  el.className = 'status ' + (ok ? 'ok' : 'err');
+}
+
+function output(data) {
+  $('output').textContent = JSON.stringify(data, null, 2);
+}
+
+async function call(path, { method = 'GET', body, auth = true } = {}) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (auth && token) headers.Authorization = 'Bearer ' + token;
+  const res = await fetch(path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+  let data = null;
+  try { data = await res.json(); } catch { /* 204 No Content */ }
+  output({ status: res.status, ...data });
+  if (!res.ok) throw new Error((data && data.error) || ('HTTP ' + res.status));
+  return data;
+}
+
+$('btnRegister').onclick = async () => {
+  try {
+    const data = await call('/api/auth/register', {
+      method: 'POST',
+      auth: false,
+      body: { email: $('email').value, password: $('password').value },
+    });
+    token = data.token;
+    localStorage.setItem('decifin_demo_token', token);
+    renderToken();
+    show($('authStatus'), true, 'Đăng ký thành công, đã đăng nhập.');
+  } catch (e) { show($('authStatus'), false, e.message); }
+};
+
+$('btnLogin').onclick = async () => {
+  try {
+    const data = await call('/api/auth/login', {
+      method: 'POST',
+      auth: false,
+      body: { email: $('email').value, password: $('password').value },
+    });
+    token = data.token;
+    localStorage.setItem('decifin_demo_token', token);
+    renderToken();
+    show($('authStatus'), true, 'Đăng nhập thành công.');
+  } catch (e) { show($('authStatus'), false, e.message); }
+};
+
+$('btnDeleteAccount').onclick = async () => {
+  try {
+    await call('/api/account', { method: 'DELETE' });
+    token = '';
+    localStorage.removeItem('decifin_demo_token');
+    renderToken();
+    show($('authStatus'), true, 'Đã xoá tài khoản và toàn bộ dữ liệu.');
+  } catch (e) { show($('authStatus'), false, e.message); }
+};
+
+$('btnImportBank').onclick = async () => {
+  try {
+    const link = await call('/api/bank-link', { method: 'POST', body: { provider: 'mock-bank' } });
+    const { draft } = await call('/api/profile/import-bank', { method: 'POST', body: { linkId: link.linkId } });
+    $('income').value = draft.income;
+    $('essential').value = draft.essential;
+    $('discretionary').value = draft.discretionary;
+    $('liquidAssets').value = draft.liquidAssets;
+    show($('profileStatus'), true, 'Đã nhập hồ sơ nháp từ ngân hàng mô phỏng — kiểm tra rồi bấm "Lưu hồ sơ".');
+  } catch (e) { show($('profileStatus'), false, e.message); }
+};
+
+$('btnLoadProfile').onclick = async () => {
+  try {
+    const { profile } = await call('/api/profile');
+    $('income').value = profile.income;
+    $('essential').value = profile.essential;
+    $('discretionary').value = profile.discretionary;
+    $('liquidAssets').value = profile.liquidAssets;
+    show($('profileStatus'), true, 'Đã tải hồ sơ đã lưu.');
+  } catch (e) { show($('profileStatus'), false, e.message); }
+};
+
+$('btnSaveProfile').onclick = async () => {
+  try {
+    await call('/api/profile', {
+      method: 'PUT',
+      body: {
+        profile: {
+          income: Number($('income').value),
+          essential: Number($('essential').value),
+          discretionary: Number($('discretionary').value),
+          liquidAssets: Number($('liquidAssets').value),
+          debts: [],
+          goals: [],
+          incomeStability: 'stable',
+        },
+      },
+    });
+    show($('profileStatus'), true, 'Đã lưu hồ sơ.');
+  } catch (e) { show($('profileStatus'), false, e.message); }
+};
+
+$('btnEvaluate').onclick = async () => {
+  try {
+    await call('/api/decisions/evaluate', {
+      method: 'POST',
+      body: {
+        event: {
+          label: $('eventLabel').value,
+          upfront: Number($('eventUpfront').value),
+          recurring: Number($('eventRecurring').value),
+          recurringMonths: Number($('eventRecurringMonths').value),
+          delayMonths: Number($('eventDelayMonths').value),
+          delayed: Number($('eventDelayed').value),
+        },
+      },
+    });
+  } catch (e) { /* lỗi đã hiện trong khung JSON */ }
+};
+</script>
+</body>
+</html>

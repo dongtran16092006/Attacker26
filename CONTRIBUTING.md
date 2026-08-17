@@ -4,7 +4,7 @@
 
 ```bash
 npm start     # http://localhost:5173
-npm test      # 51 phép kiểm thử
+npm test      # 57 phép kiểm thử
 ```
 
 Cần Node 20 trở lên. Không cài đặt gì thêm, dự án không có dependency.

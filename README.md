@@ -70,10 +70,10 @@ nào về. Cần máy chủ vì trình duyệt chặn ES module khi mở tệp b
 Chạy bộ kiểm thử:
 
 ```bash
-npm test           # 51 phép kiểm thử, dùng node:test có sẵn
+npm test           # 57 phép kiểm thử, dùng node:test có sẵn
 ```
 
-Yêu cầu duy nhất: Node phiên bản 20 trở lên.
+Yêu cầu duy nhất: Node phiên bản 22.5 trở lên (bản backend dùng `node:sqlite`, module có sẵn từ Node 22.5).
 
 ### Bản một tệp, không cần cài gì
 
@@ -84,6 +84,31 @@ node tools/build_standalone.js    # tạo decifin-standalone.html
 Tệp sinh ra chạy độc lập: bấm đúp mở bằng trình duyệt là dùng được, không cần
 Node, không cần máy chủ. Tiện khi gửi cho người khác xem thử.
 
+### Backend (giai đoạn 2 — tài khoản người dùng)
+
+Bản MVP mặc định không có máy chủ (xem phần Kiến trúc). `server/` là API cho
+giai đoạn 2, khi nền tảng chuyển sang mô hình có tài khoản: đăng ký/đăng nhập,
+lưu hồ sơ tài chính tập trung, và gọi engine mô phỏng từ xa. Vẫn giữ nguyên
+tắc zero-dependency — chỉ dùng `node:http`, `node:sqlite`, `node:crypto`.
+
+```bash
+npm run server     # mở http://localhost:8787
+```
+
+Hồ sơ tài chính được mã hoá bằng AES-256-GCM trước khi ghi xuống SQLite, mật
+khẩu băm bằng scrypt, phiên đăng nhập là token ngẫu nhiên (không phải JWT, để
+khỏi kéo thêm thư viện ký/giải mã). `DELETE /api/account` xoá toàn bộ dữ liệu
+của người dùng, đáp ứng quyền yêu cầu xoá theo Nghị định 13/2023/NĐ-CP (mục
+8.1.1). Đặt `DECIFIN_ENC_KEY` (32 byte hex) khi chạy thật; thiếu biến này thì
+server dùng khoá cố định chỉ hợp lệ khi phát triển cục bộ.
+
+Route chính: `POST /api/auth/register`, `POST /api/auth/login`,
+`GET|PUT /api/profile`, `POST /api/decisions/evaluate`,
+`POST /api/decisions/rank`, `GET /api/assumptions`, `DELETE /api/account`.
+Bản thân route không lặp lại logic tài chính — mọi phép tính vẫn gọi thẳng
+vào `src/engine`, đúng như lý do kiến trúc tách lớp đã nêu ở trên: engine viết
+một lần, dùng lại nguyên vẹn dù chạy trên trình duyệt hay trên máy chủ.
+
 ## Kiến trúc
 
 ![Kiến trúc engine tách rời khỏi giao diện](./docs/images/architecture.png)
@@ -92,7 +117,7 @@ Ba lựa chọn đáng nói:
 
 **Không phụ thuộc thư viện ngoài.** Toàn bộ dự án có 0 dependency. Với một công
 cụ tài chính chạy trên máy người dùng, mỗi thư viện kéo theo là một bề mặt rủi ro
-chuỗi cung ứng. Biểu đồ được vẽ tay bằng SVG trong 90 dòng.
+chuỗi cung ứng. Biểu đồ được vẽ tay bằng SVG, khoảng 190 dòng.
 
 **Không máy chủ, không cơ sở dữ liệu.** Dữ liệu thu nhập, nợ và tài sản là dữ
 liệu cá nhân nhạy cảm. Ở giai đoạn kiểm chứng sản phẩm, cách an toàn nhất là
@@ -135,7 +160,8 @@ phẩm tài chính. Quyền quyết định cuối cùng thuộc về người d
 ```
 src/engine/     thuật toán tài chính, không biết gì về DOM
 src/ui/         sáu màn hình, biểu đồ SVG, quản lý trạng thái
-test/           51 phép kiểm thử chạy bằng node:test
+server/         API giai đoạn 2: tài khoản, hồ sơ tập trung, gọi engine từ xa
+test/           kiểm thử chạy bằng node:test (engine, giao diện, API)
 tools/          máy chủ tĩnh, sinh hình minh hoạ, sinh trang preview
 docs/           kiến trúc, đặc tả thuật toán, trang xem toàn bộ màn hình
 ```

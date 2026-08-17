@@ -56,6 +56,8 @@ export function explain(profile, outcome, extras = {}) {
   return messages.sort((a, b) => SEVERITY[b.severity] - SEVERITY[a.severity]);
 }
 
-const fmtMonths = (m) => `${m.toFixed(1)} tháng`;
-const fmtPercent = (v, digits = 1) => `${(v * 100).toFixed(digits)}%`;
+// Dấu thập phân của tiếng Việt là dấu phẩy. Trước đây ba hàm này in ra dấu
+// chấm, nên trong cùng một màn hình có chỗ ghi "21,46%" và chỗ ghi "21.46%".
+const fmtMonths = (m) => `${m.toFixed(1).replace('.', ',')} tháng`;
+const fmtPercent = (v, digits = 1) => `${(v * 100).toFixed(digits).replace('.', ',')}%`;
 const fmtMoney = (v) => `${Math.round(v).toLocaleString('vi-VN')} đ`;

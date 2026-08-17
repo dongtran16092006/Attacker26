@@ -40,6 +40,7 @@
 
   --ease: cubic-bezier(0.32, 0.72, 0, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.42, 0.64, 1);
 
   --shadow-ambient: 0 1px 2px rgba(22, 23, 26, 0.04), 0 8px 24px -12px rgba(22, 23, 26, 0.14);
   --shadow-lift: 0 2px 4px rgba(22, 23, 26, 0.05), 0 18px 40px -18px rgba(22, 23, 26, 0.22);
@@ -121,13 +122,39 @@ button, input, select { font: inherit; color: inherit; }
 .steps { display: flex; gap: 3px; align-items: center; }
 .steps__item {
   font-size: 12.5px; color: var(--muted); padding: 5px 10px; border-radius: 999px;
+  border: 0; background: none; font: inherit; font-size: 12.5px;
   transition: color 0.3s var(--ease), background 0.3s var(--ease);
 }
-.steps__item[aria-current='true'] { color: var(--ink); background: var(--surface-sunken); font-weight: 500; }
-@media (max-width: 720px) { .steps { display: none; } }
+.steps__item[data-reachable='true'] { cursor: pointer; }
+.steps__item[data-reachable='true']:hover { color: var(--ink); background: var(--surface-sunken); }
+.steps__item:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.steps__item[aria-current='step'] { color: var(--ink); background: var(--surface-sunken); font-weight: 500; }
+.steps__item[disabled] { cursor: default; opacity: 0.55; }
+
+/* Trên điện thoại thanh bước bị ẩn, nên thay bằng một vạch tiến trình mảnh
+   chạy hết bề ngang. Vẫn thấy mình đang ở đâu mà không tốn chiều cao. */
+.steps__rail { display: none; height: 2px; background: var(--line); position: relative; }
+.steps__rail::after {
+  content: ''; position: absolute; inset: 0 auto 0 0; border-radius: 999px;
+  width: var(--at, 0%); background: var(--ink);
+  transition: width 0.65s var(--ease);
+}
+@media (max-width: 720px) {
+  .steps { display: none; }
+  .steps__rail { display: block; }
+}
 
 main { padding: 40px 0 88px; }
 .stack > * + * { margin-top: 22px; }
+
+/* Bỏ qua phần điều hướng, cho người dùng bàn phím. Chỉ hiện khi được focus. */
+.skip {
+  position: absolute; left: 12px; top: -60px; z-index: 40;
+  padding: 10px 16px; border-radius: var(--r-control);
+  background: var(--ink); color: var(--paper); text-decoration: none;
+  transition: top 0.25s var(--ease);
+}
+.skip:focus { top: 12px; }
 
 /* ---------- vỏ lồng: khung ngoài mềm, lõi trong sắc ---------- */
 .shell-card {
@@ -149,6 +176,19 @@ main { padding: 40px 0 88px; }
   border-radius: var(--r-core);
   padding: 22px;
 }
+
+/* Thẻ bấm được: hồ sơ mẫu và bốn nhóm quyết định. Trước đây chúng có
+   cursor:pointer nhưng không có trạng thái nào khi rê chuột, nên trông như
+   chữ chết. Nhấc nhẹ và đẩy mũi tên là đủ để tay biết đây là thứ bấm được. */
+.panel--action {
+  text-align: left; cursor: pointer; width: 100%;
+  transition: transform 0.35s var(--ease), border-color 0.35s var(--ease), box-shadow 0.35s var(--ease);
+}
+.panel--action:hover { transform: translateY(-2px); border-color: var(--line-strong); box-shadow: var(--shadow-ambient); }
+.panel--action:active { transform: translateY(0) scale(0.994); }
+.panel--action:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.panel--action .go { display: inline-block; transition: transform 0.35s var(--ease); }
+.panel--action:hover .go { transform: translateX(3px); }
 
 .eyebrow {
   font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em;
@@ -208,13 +248,63 @@ main { padding: 40px 0 88px; }
 .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
 .row--end { justify-content: flex-end; }
 .spread { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; }
+@media (max-width: 560px) {
+  .spread { flex-direction: column; align-items: flex-start; }
+  .row--end { justify-content: stretch; }
+  .row--end .btn { flex: 1; justify-content: center; }
+}
+
+/* ---------- vạch tiến trình của biểu mẫu bốn bước ---------- */
+.progress { height: 3px; border-radius: 999px; background: var(--surface-sunken); overflow: hidden; }
+.progress__bar {
+  display: block; height: 100%; border-radius: inherit; background: var(--ink);
+  width: var(--at, 0%); transition: width 0.65s var(--ease);
+}
+
+/* ---------- dải đo điểm an toàn ---------- */
+.meter { height: 4px; border-radius: 999px; background: var(--surface-sunken); overflow: hidden; margin-top: 7px; }
+.meter__fill {
+  display: block; height: 100%; border-radius: inherit; background: currentColor;
+  transform: scaleX(var(--at, 0)); transform-origin: 0 50%;
+  animation: fill 0.85s var(--ease) 0.15s both;
+}
+
+/* ---------- báo lỗi ngay trong trang ---------- */
+/* Thay cho window.alert: hộp thoại của trình duyệt cắt ngang mạch làm việc,
+   không theo được hệ màu, và trên điện thoại thì che mất chỗ vừa sai. */
+.notice {
+  display: flex; gap: 11px; align-items: flex-start;
+  padding: 13px 15px; border-radius: var(--r-core);
+  background: var(--risk-bg); color: var(--risk);
+  border: 1px solid color-mix(in srgb, var(--risk) 26%, transparent);
+  animation: rise 0.4s var(--ease-out) both;
+}
+.notice__mark { flex: none; font-weight: 700; line-height: 1.5; }
+.notice ul { margin: 0; padding-left: 18px; }
+.notice li + li { margin-top: 3px; }
+.notice--ask { background: var(--caution-bg); color: var(--caution); border-color: color-mix(in srgb, var(--caution) 30%, transparent); }
 
 /* ---------- thẻ chỉ số ---------- */
 .metrics { display: grid; gap: 14px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
 @media (max-width: 900px) { .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 460px) { .metrics { grid-template-columns: 1fr; } }
 
-.metric { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-core); padding: 16px 17px; }
+.metric {
+  position: relative; overflow: hidden;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-core);
+  padding: 16px 17px 16px 20px;
+}
+/* Đèn giao thông đọc được bằng liếc mắt. Trước đây chỉ có chữ số đổi màu, mà
+   chữ số thì phải đọc mới biết. Vạch dọc bên trái thấy ngay từ xa. */
+.metric::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: var(--line-strong);
+  transform: scaleY(0); transform-origin: 50% 0;
+  animation: rail 0.6s var(--ease-out) 0.12s both;
+}
+.metric--safe::before { background: var(--safe); }
+.metric--caution::before { background: var(--caution); }
+.metric--risky::before { background: var(--risk); }
 .metric__label { font-size: 12.5px; color: var(--muted); }
 .metric__value { font-size: 1.55rem; font-weight: 600; margin-top: 4px; }
 .metric__note { font-size: 12px; margin-top: 3px; }
@@ -256,8 +346,13 @@ main { padding: 40px 0 88px; }
 }
 .option--top .option__rank { background: var(--ink); color: var(--paper); }
 .option__title { font-weight: 600; letter-spacing: -0.02em; }
-.option__score { margin-left: auto; text-align: right; }
+.option__score { margin-left: auto; text-align: right; min-width: 118px; }
 .option__score b { font-size: 1.5rem; font-weight: 600; }
+@media (max-width: 560px) {
+  .option__head { flex-wrap: wrap; }
+  .option__score { margin-left: 44px; text-align: left; width: 100%; }
+  .meter__fill { transform-origin: 0 50%; }
+}
 
 .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; margin-top: 18px;
   background: var(--line); border: 1px solid var(--line); border-radius: var(--r-control); overflow: hidden; }
@@ -279,18 +374,87 @@ main { padding: 40px 0 88px; }
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-core);
   padding: 20px 22px;
 }
-@media (max-width: 620px) { .reveal-apr { grid-template-columns: 1fr; text-align: left; } }
+@media (max-width: 620px) { .reveal-apr { grid-template-columns: 1fr; text-align: left; gap: 12px; } }
 .reveal-apr__k { font-size: 12.5px; color: var(--muted); }
 .reveal-apr__v { font-size: 1.9rem; font-weight: 600; line-height: 1.1; margin-top: 2px; }
-.reveal-apr__arrow { color: var(--muted); font-size: 1.2rem; }
-@media (max-width: 620px) { .reveal-apr__arrow { display: none; } }
+.reveal-apr__arrow { color: var(--muted); font-size: 1.2rem; display: block; }
+/* Mũi tên là thứ mang nghĩa "quảng cáo bao nhiêu, thực tế bao nhiêu". Trước đây
+   nó bị ẩn trên điện thoại, làm mất luôn quan hệ giữa hai con số. Giờ quay xuống. */
+@media (max-width: 620px) { .reveal-apr__arrow { transform: rotate(90deg); width: 1.2rem; } }
 
 /* ---------- biểu đồ ---------- */
-.chart { width: 100%; height: auto; display: block; overflow: visible; }
-.chart text { font-family: var(--font-figure); font-size: 10.5px; fill: var(--muted); }
+/* Lề quanh khung vẽ tính bằng pixel thật chứ không theo tỷ lệ, vì nhãn trục là
+   chữ HTML có cỡ cố định. Nhờ vậy nhãn không bao giờ bị co nhỏ theo màn hình. */
+.chart-wrap { position: relative; padding: 8px 52px 26px 58px; }
+.chart-plot { position: relative; }
+.chart { display: block; width: 100%; height: 208px; touch-action: pan-y; }
+@media (max-width: 640px) {
+  .chart-wrap { padding: 8px 42px 24px 46px; }
+  .chart { height: 176px; }
+}
+
 .chart .axis { stroke: var(--line); stroke-width: 1; }
-.chart .guide { stroke: var(--line); stroke-width: 1; stroke-dasharray: 3 4; }
+.chart .guide { stroke: var(--risk); stroke-width: 1; stroke-dasharray: 3 4; opacity: 0.7; }
+.chart .danger { fill: var(--risk); opacity: 0.06; }
 .chart .series { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.chart .area { stroke: none; opacity: 0.09; }
+.chart .cursor { stroke: var(--ink-soft); stroke-width: 1; opacity: 0; }
+
+/* Nhãn trục, dựng bằng HTML rồi đặt chồng lên đúng toạ độ phần trăm. */
+.chart-y, .chart-x, .chart-end, .chart-guide {
+  position: absolute; white-space: nowrap; pointer-events: none;
+  font-family: var(--font-figure); font-variant-numeric: tabular-nums;
+  font-size: 11px; color: var(--muted); line-height: 1;
+}
+.chart-y { right: 100%; margin-right: 8px; transform: translateY(-50%); }
+.chart-x { top: 100%; margin-top: 9px; transform: translateX(-50%); }
+.chart-x--start { transform: none; }
+.chart-x--end { transform: translateX(-100%); }
+.chart-end { left: 100%; margin-left: 9px; transform: translateY(-50%); font-weight: 500; }
+.chart-guide { right: 0; transform: translateY(-140%); color: var(--risk); }
+
+/* Chấm đầu mút: cho biết đường dừng ở đâu khi hai đường chồng lên nhau. */
+.chart-dot {
+  position: absolute; width: 7px; height: 7px; border-radius: 999px;
+  transform: translate(-50%, -50%); box-shadow: 0 0 0 2px var(--surface);
+}
+.chart-dot--animated { animation: pop 0.4s var(--ease-spring) 1.15s both; }
+
+/* Điểm bám khi rê chuột. Ẩn cho tới khi trỏ vào biểu đồ. */
+.chart-cursor-dot {
+  position: absolute; width: 8px; height: 8px; border-radius: 999px;
+  transform: translate(-50%, -50%); box-shadow: 0 0 0 2px var(--surface);
+  opacity: 0; left: 0; top: 0;
+}
+.chart-wrap[data-hover='on'] .cursor, .chart-wrap[data-hover='on'] .chart-cursor-dot { opacity: 1; }
+
+.chart-tip {
+  position: absolute; top: 0; left: 0; z-index: 5; pointer-events: none;
+  min-width: 158px; padding: 9px 11px; border-radius: var(--r-control);
+  background: var(--surface); border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-lift); font-size: 12.5px;
+  opacity: 0; transform: translate(-50%, -110%);
+  transition: opacity 0.16s var(--ease);
+}
+.chart-wrap[data-hover='on'] .chart-tip { opacity: 1; }
+.chart-tip__k { color: var(--muted); font-size: 11.5px; }
+.chart-tip__row { display: flex; align-items: center; gap: 7px; margin-top: 5px; }
+.chart-tip__row b { margin-left: auto; font-family: var(--font-figure); font-variant-numeric: tabular-nums; font-weight: 600; }
+.chart-tip__swatch { width: 13px; height: 2px; border-radius: 2px; flex: none; }
+
+/* Bảng số liệu của biểu đồ, cho người dùng trình đọc màn hình và cho ai muốn
+   xem con số thay vì đường. Đóng lại mặc định để không chiếm chỗ. */
+.chart-data { margin-top: 12px; }
+.chart-data > summary { cursor: pointer; font-size: 13px; color: var(--muted); }
+.chart-data > summary:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.chart-data table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12.5px; }
+.chart-data th, .chart-data td {
+  text-align: right; padding: 5px 8px; border-bottom: 1px solid var(--line);
+  font-family: var(--font-figure); font-variant-numeric: tabular-nums;
+}
+.chart-data th:first-child, .chart-data td:first-child { text-align: left; font-family: var(--font); }
+.chart-data thead th { color: var(--muted); font-weight: 500; }
+.chart-data__scroll { overflow-x: auto; }
 
 /* ---------- bảng giả định ---------- */
 .rows { border: 1px solid var(--line); border-radius: var(--r-core); overflow: hidden; }
@@ -298,20 +462,39 @@ main { padding: 40px 0 88px; }
 .rows__item + .rows__item { border-top: 1px solid var(--line); }
 
 /* ---------- chuyển động ---------- */
+/* Nguyên tắc: mỗi chuyển động phải nói một điều gì đó. Vào trang thì dựng thứ
+   tự đọc, vẽ biểu đồ thì cho thấy thời gian trôi, đếm số thì cho thấy con số
+   được tính ra chứ không phải in sẵn. Không có vòng lặp vô hạn ở đâu cả. */
 @keyframes rise {
   from { opacity: 0; transform: translate3d(0, 14px, 0); }
   to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
-@keyframes draw { to { stroke-dashoffset: 0; } }
+@keyframes wipe { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes rail { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes fill { from { transform: scaleX(0); } to { transform: scaleX(var(--at, 0)); } }
+/* Chấm đầu mút đã dịch nửa chiều để nằm đúng tâm, nên khung hình phải giữ lại
+   phép dịch đó, nếu không chấm sẽ nhảy chỗ khi hiệu ứng chạy. */
+@keyframes pop {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.2); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes fade { from { opacity: 0; } to { opacity: 0.09; } }
 
 .rise { animation: rise 0.62s var(--ease-out) both; }
 .view { animation: rise 0.42s var(--ease-out) both; }
 
-.chart .series--animated {
-  stroke-dasharray: var(--len);
-  stroke-dashoffset: var(--len);
-  animation: draw 1.15s var(--ease) 0.15s forwards;
+/* Biểu đồ hiện dần từ trái sang phải: trục hoành là thời gian, nên hướng chuyển
+   động trùng với hướng đọc của dữ liệu. Khung cắt trượt thay cho thủ thuật
+   stroke-dashoffset để mỗi đường vẫn giữ được kiểu nét đứt riêng. */
+.chart .wipe--animated {
+  transform-box: fill-box; transform-origin: 0 50%;
+  animation: wipe 1.15s var(--ease) 0.15s both;
 }
+.chart .area--animated { animation: fade 0.7s var(--ease-out) 0.55s both; }
+
+/* Đổi nền sáng tối: hoà hai ảnh thay vì nháy một cái. Trình duyệt nào chưa hỗ
+   trợ View Transitions thì rơi về hành vi cũ, không hỏng gì. */
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: 0.32s; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -319,7 +502,13 @@ main { padding: 40px 0 88px; }
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
-  .chart .series--animated { stroke-dasharray: none; stroke-dashoffset: 0; }
+  .chart .wipe--animated { transform: none; }
+  .chart .area--animated { opacity: 0.09; }
+  .chart-dot--animated { opacity: 1; transform: translate(-50%, -50%); }
+  .metric::before { transform: scaleY(1); }
+  .meter__fill { transform: scaleX(var(--at, 0)); }
+  .chart .tip-dot--animated { opacity: 1; transform: none; }
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
 }
 
 .sr-only {
@@ -806,8 +995,10 @@ function explain(profile, outcome, extras = {}) {
   return messages.sort((a, b) => SEVERITY[b.severity] - SEVERITY[a.severity]);
 }
 
-const fmtMonths = (m) => `${m.toFixed(1)} tháng`;
-const fmtPercent = (v, digits = 1) => `${(v * 100).toFixed(digits)}%`;
+// Dấu thập phân của tiếng Việt là dấu phẩy. Trước đây ba hàm này in ra dấu
+// chấm, nên trong cùng một màn hình có chỗ ghi "21,46%" và chỗ ghi "21.46%".
+const fmtMonths = (m) => `${m.toFixed(1).replace('.', ',')} tháng`;
+const fmtPercent = (v, digits = 1) => `${(v * 100).toFixed(digits).replace('.', ',')}%`;
 const fmtMoney = (v) => `${Math.round(v).toLocaleString('vi-VN')} đ`;
 
 // ======================================================================
@@ -972,6 +1163,21 @@ function monthsInt(v) {
   return `${Math.round(v)} tháng`;
 }
 
+/**
+ * Số tháng quỹ dự phòng cầm cự được.
+ *
+ * Vô hạn là trường hợp có thật: hồ sơ chưa khai chi phí thiết yếu nào thì mẫu
+ * số bằng 0. Trước đây chỗ này in ra chữ "Infinity" giữa một giao diện tiếng
+ * Việt, nên phải nói rõ là chưa đủ dữ liệu để tính.
+ */
+function runwayMonths(v) {
+  if (!Number.isFinite(v)) return 'chưa tính được';
+  return `${decimal(v)} tháng`;
+}
+
+/** Giá trị an toàn để nhét vào thuộc tính data-count của lớp đếm số. */
+const countable = (v) => (Number.isFinite(v) ? v : 0);
+
 /** Chặn ký tự lạ khi nhét dữ liệu người dùng vào chuỗi HTML. */
 function escapeHtml(value) {
   return String(value)
@@ -982,11 +1188,34 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
-/** Đọc số người dùng gõ, chấp nhận cả dấu chấm phân cách nghìn kiểu Việt Nam. */
+/**
+ * Đọc số người dùng gõ.
+ *
+ * Có hai quy ước cùng tồn tại trên một màn hình và phải phân biệt được:
+ *
+ * Người Việt gõ tiền theo kiểu "25.000.000", dấu chấm ngăn nghìn và dấu phẩy
+ * ngăn thập phân. Nhưng ô <input type="number"> của trình duyệt luôn trả về giá
+ * trị theo chuẩn máy, tức dấu chấm ngăn thập phân: ô lãi suất đặt sẵn 0,8% sẽ
+ * đọc ra chuỗi "0.8". Nếu bỏ hết dấu chấm như cách cũ thì "0.8" thành 8, và
+ * toàn bộ nhóm quyết định trả góp tính sai gấp mười lần.
+ *
+ * Cách phân biệt: có dấu phẩy thì chắc chắn là kiểu Việt. Chỉ có dấu chấm thì
+ * xem hình dạng - mọi nhóm sau dấu chấm đều đúng ba chữ số thì đó là ngăn
+ * nghìn, còn lại là dấu thập phân. Trường hợp lấp lửng duy nhất là "1.234", ưu
+ * tiên hiểu theo kiểu Việt vì đây là ứng dụng tiếng Việt nói chuyện tiền bạc.
+ */
 function parseAmount(raw) {
-  if (typeof raw === 'number') return raw;
-  const cleaned = String(raw).replace(/[^\d,-]/g, '').replace(',', '.');
-  const n = Number.parseFloat(cleaned);
+  if (typeof raw === 'number') return Number.isFinite(raw) ? raw : 0;
+
+  const cleaned = String(raw).replace(/[^\d.,-]/g, '');
+  if (cleaned === '') return 0;
+
+  const vietnamese = cleaned.includes(',') || /^-?\d{1,3}(\.\d{3})+$/.test(cleaned);
+  const normalised = vietnamese
+    ? cleaned.replace(/\./g, '').replace(',', '.')
+    : cleaned;
+
+  const n = Number.parseFloat(normalised);
   return Number.isFinite(n) ? n : 0;
 }
 
@@ -1096,6 +1325,9 @@ const state = {
   decisionInput: null,
   results: null,
   installment: null,
+  // Báo lỗi và câu hỏi xác nhận, dựng ngay trong trang thay cho hộp thoại của
+  // trình duyệt. null nghĩa là không có gì cần nói.
+  notice: null,
 };
 
 function subscribe(fn) {
@@ -1146,22 +1378,40 @@ function writeTheme(value) {
 /**
  * Biểu đồ đường vẽ tay bằng SVG.
  *
- * Không dùng thư viện biểu đồ vì chỉ cần đúng một loại đồ thị, và một tệp 90
- * dòng thì rẻ hơn nhiều so với việc kéo theo cả một phụ thuộc ngoài vào một
- * ứng dụng tài chính chạy trên máy người dùng.
+ * Không dùng thư viện biểu đồ vì chỉ cần đúng một loại đồ thị, và một tệp nhỏ
+ * thì rẻ hơn nhiều so với việc kéo theo cả một phụ thuộc ngoài vào một ứng dụng
+ * tài chính chạy trên máy người dùng.
+ *
+ * Hai quyết định đáng nói về cách dựng:
+ *
+ * Chữ và chấm nằm ngoài SVG, dựng bằng HTML đặt chồng lên. Trước đây chúng nằm
+ * trong SVG, mà SVG thì co theo bề ngang khung chứa: trên điện thoại cả hình bị
+ * thu còn khoảng 38%, nên chữ 11px hiển thị ra chưa tới 7px. Đưa chữ ra HTML
+ * thì nó giữ đúng cỡ thật ở mọi bề ngang màn hình, còn phần hình học muốn co
+ * giãn bao nhiêu cũng được.
+ *
+ * Màu của đường mang nghĩa trạng thái tài chính chứ không phải danh tính, nên
+ * hai phương án cùng xếp loại sẽ ra cùng một màu. Để vẫn phân biệt được, mỗi
+ * đường có thêm ba lớp nhận dạng phụ: kiểu nét đứt riêng, nhãn giá trị ở đầu
+ * mút, và bảng số liệu mở ra được ngay dưới biểu đồ.
  */
 
 
-const W = 720;
-const H = 240;
-const PAD = { top: 16, right: 16, bottom: 26, left: 46 };
+/** Hệ toạ độ trong SVG là một ô vuông 1000x1000, được kéo giãn cho vừa khung. */
+const BOX = 1000;
+
+/** Nét của từng đường theo thứ tự. Đây là lớp nhận dạng khi màu trùng nhau. */
+const DASHES = ['none', '7 5', '2 4', '10 4 2 4'];
 
 /**
  * @param {{name:string, values:number[], tone:'safe'|'caution'|'risky'|'ink'}[]} series
- * @param {{unit?:'money'|'months', animate?:boolean, guideAt?:number, guideLabel?:string}} opts
+ * @param {{id?:string, unit?:'money'|'months', animate?:boolean, guideAt?:number, guideLabel?:string, fillFirst?:boolean}} opts
  */
 function lineChart(series, opts = {}) {
-  const { unit = 'money', animate = true, guideAt = null, guideLabel = '' } = opts;
+  const {
+    id = 'chart', unit = 'money', animate = true,
+    guideAt = null, guideLabel = '', fillFirst = false,
+  } = opts;
   if (series.length === 0 || series[0].values.length === 0) return '';
 
   const span = Math.max(...series.map((s) => s.values.length)) - 1 || 1;
@@ -1171,52 +1421,128 @@ function lineChart(series, opts = {}) {
   const max = rawMax === rawMin ? rawMax + 1 : rawMax;
   const min = rawMin;
 
-  const plotW = W - PAD.left - PAD.right;
-  const plotH = H - PAD.top - PAD.bottom;
-  const x = (i) => PAD.left + (i / span) * plotW;
-  const y = (v) => PAD.top + plotH - ((v - min) / (max - min)) * plotH;
+  // Toạ độ tính bằng phần trăm khung vẽ, nên HTML và SVG dùng chung một hệ.
+  const px = (i) => (i / span) * 100;
+  const py = (v) => 100 - ((v - min) / (max - min)) * 100;
+  const u = (pct) => ((pct / 100) * BOX).toFixed(1);
 
-  const ticks = [min, min + (max - min) / 2, max];
-  const gridLines = ticks
-    .map((t) => {
-      const yy = y(t).toFixed(1);
-      const label = unit === 'money' ? moneyShort(t) : `${Math.round(t)}`;
-      return `<line class="axis" x1="${PAD.left}" y1="${yy}" x2="${W - PAD.right}" y2="${yy}" opacity="0.6"/>
-<text x="${PAD.left - 8}" y="${yy}" text-anchor="end" dominant-baseline="middle">${label}</text>`;
-    })
+  const ticks = [max, min + (max - min) / 2, min];
+  const grid = ticks
+    .map((t) => `<line class="axis" x1="0" y1="${u(py(t))}" x2="${BOX}" y2="${u(py(t))}" opacity="0.6" vector-effect="non-scaling-stroke"/>`)
     .join('');
 
-  const guide = guideAt === null ? '' :
-    `<line class="guide" x1="${PAD.left}" y1="${y(guideAt).toFixed(1)}" x2="${W - PAD.right}" y2="${y(guideAt).toFixed(1)}"/>
-<text x="${W - PAD.right}" y="${(y(guideAt) - 6).toFixed(1)}" text-anchor="end">${guideLabel}</text>`;
+  // Vùng dưới ngưỡng thận trọng được tô nhạt. Một dải nền đọc nhanh hơn một
+  // đường nét đứt: mắt thấy ngay đường nào đang đi vào vùng đó.
+  const guide = guideAt === null ? '' : `
+<rect class="danger" x="0" y="${u(py(guideAt))}" width="${BOX}" height="${u(100 - py(guideAt))}"/>
+<line class="guide" x1="0" y1="${u(py(guideAt))}" x2="${BOX}" y2="${u(py(guideAt))}" vector-effect="non-scaling-stroke"/>`;
+
+  const area = fillFirst ? areaPath(series[0], px, py, u, animate) : '';
 
   const paths = series
-    .map((s) => {
-      const d = s.values.map((v, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
-      // xấp xỉ chiều dài đường để chạy hiệu ứng vẽ dần
-      const length = Math.round(estimateLength(s.values, x, y));
-      const cls = animate ? 'series series--animated' : 'series';
-      return `<path class="${cls}" d="${d}" stroke="${strokeFor(s.tone)}" style="--len:${length}"/>`;
+    .map((s, i) => {
+      const d = s.values.map((v, k) => `${k === 0 ? 'M' : 'L'}${u(px(k))},${u(py(v))}`).join(' ');
+      const dash = DASHES[i % DASHES.length];
+      return `<path class="series" d="${d}" stroke="${strokeFor(s.tone)}"${dash === 'none' ? '' : ` stroke-dasharray="${dash}"`} vector-effect="non-scaling-stroke"/>`;
     })
     .join('');
 
-  const xLabels = [0, Math.round(span / 2), span]
-    .map((i) => `<text x="${x(i).toFixed(1)}" y="${H - 8}" text-anchor="${i === 0 ? 'start' : i === span ? 'end' : 'middle'}">tháng ${i}</text>`)
+  // Vẽ dần bằng một khung cắt trượt từ trái sang. Trục hoành là thời gian, nên
+  // hướng chuyển động trùng với hướng dữ liệu chảy.
+  const clipId = `wipe-${id}`;
+  const wipe = `<defs><clipPath id="${clipId}"><rect class="wipe${animate ? ' wipe--animated' : ''}" x="0" y="0" width="${BOX}" height="${BOX}"/></clipPath></defs>`;
+
+  const meta = escapeHtml(JSON.stringify({
+    unit, span, min, max,
+    series: series.map((s) => ({ name: s.name, tone: s.tone, values: s.values.map(round2) })),
+  }));
+
+  return `<div class="chart-wrap">
+  <div class="chart-plot">
+    <svg class="chart" viewBox="0 0 ${BOX} ${BOX}" preserveAspectRatio="none" role="img" data-chart="${meta}">
+      <title>${escapeHtml(series.map((s) => s.name).join(', '))}</title>
+      ${wipe}${grid}${guide}
+      <g clip-path="url(#${clipId})">${area}${paths}</g>
+      <line class="cursor" x1="0" x2="0" y1="0" y2="${BOX}" vector-effect="non-scaling-stroke"/>
+    </svg>
+    ${ticks.map((t) => `<span class="chart-y" style="top:${py(t).toFixed(2)}%">${axisLabel(t, unit)}</span>`).join('')}
+    ${[0, Math.round(span / 2), span].map((i, k) => {
+      const edge = k === 0 ? ' chart-x--start' : k === 2 ? ' chart-x--end' : '';
+      return `<span class="chart-x${edge}" style="left:${px(i).toFixed(2)}%">tháng ${i}</span>`;
+    }).join('')}
+    ${guideAt === null ? '' : `<span class="chart-guide" style="top:${py(guideAt).toFixed(2)}%">${escapeHtml(guideLabel)}</span>`}
+    ${endMarks(series, px, py, span, unit, animate)}
+    ${series.map((s) => `<i class="chart-cursor-dot" style="background:${strokeFor(s.tone)}"></i>`).join('')}
+    <div class="chart-tip" role="presentation"></div>
+  </div>
+</div>`;
+}
+
+/** Nền tô dưới đường đầu tiên, để mắt biết nên nhìn đường nào trước. */
+function areaPath(s, px, py, u, animate) {
+  const line = s.values.map((v, i) => `${i === 0 ? 'M' : 'L'}${u(px(i))},${u(py(v))}`).join(' ');
+  const d = `${line} L${u(px(s.values.length - 1))},${BOX} L${u(px(0))},${BOX} Z`;
+  return `<path class="area${animate ? ' area--animated' : ''}" d="${d}" fill="${strokeFor(s.tone)}"/>`;
+}
+
+/**
+ * Đầu mút mỗi đường: một chấm và một nhãn giá trị. Khi hai đường cùng xếp loại
+ * nên cùng màu, đây là chỗ người đọc phân biệt được chúng. Nhãn nào sát nhau
+ * quá thì được đẩy ra để không đè lên nhau.
+ */
+function endMarks(series, px, py, span, unit, animate) {
+  const marks = series
+    .map((s) => {
+      const value = s.values[s.values.length - 1];
+      return { tone: s.tone, value, at: py(value), label: py(value) };
+    })
+    .sort((a, b) => a.at - b.at);
+
+  const MIN_GAP = 9;
+  for (let i = 1; i < marks.length; i += 1) {
+    if (marks[i].label - marks[i - 1].label < MIN_GAP) marks[i].label = marks[i - 1].label + MIN_GAP;
+  }
+
+  const left = px(span).toFixed(2);
+  return marks
+    .map((m) => `<i class="chart-dot${animate ? ' chart-dot--animated' : ''}" style="left:${left}%;top:${m.at.toFixed(2)}%;background:${strokeFor(m.tone)}"></i>
+<span class="chart-end" style="top:${m.label.toFixed(2)}%;color:${strokeFor(m.tone)}">${axisLabel(m.value, unit)}</span>`)
+    .join('');
+}
+
+/**
+ * Bảng số liệu của biểu đồ. Có hai lý do: trình đọc màn hình không đọc được
+ * đường vẽ, và người muốn con số chính xác thì không phải ước lượng bằng mắt.
+ * Lấy mẫu thưa cho khỏi thành bảng hai mươi lăm dòng.
+ */
+function chartTable(series, unit = 'money') {
+  if (series.length === 0 || series[0].values.length === 0) return '';
+  const span = Math.max(...series.map((s) => s.values.length)) - 1 || 1;
+  const step = Math.max(Math.round(span / 8), 1);
+
+  const marks = [];
+  for (let i = 0; i <= span; i += step) marks.push(i);
+  if (marks[marks.length - 1] !== span) marks.push(span);
+
+  const head = `<tr><th scope="col">Tháng</th>${series.map((s) => `<th scope="col">${escapeHtml(s.name)}</th>`).join('')}</tr>`;
+  const body = marks
+    .map((i) => `<tr><th scope="row">${i}</th>${series
+      .map((s) => `<td>${axisLabel(s.values[Math.min(i, s.values.length - 1)], unit)}</td>`)
+      .join('')}</tr>`)
     .join('');
 
-  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" preserveAspectRatio="xMidYMid meet">
-<title>${escapeHtml(series.map((s) => s.name).join(', '))}</title>
-${gridLines}${guide}${paths}${xLabels}
-</svg>`;
+  return `<details class="chart-data">
+  <summary>Xem số liệu dạng bảng</summary>
+  <div class="chart-data__scroll"><table>
+    <thead>${head}</thead>
+    <tbody>${body}</tbody>
+  </table></div>
+</details>`;
 }
 
-function estimateLength(values, x, y) {
-  let total = 0;
-  for (let i = 1; i < values.length; i += 1) {
-    total += Math.hypot(x(i) - x(i - 1), y(values[i]) - y(values[i - 1]));
-  }
-  return Math.max(total, 1);
-}
+const round2 = (v) => Math.round(v * 100) / 100;
+
+const axisLabel = (v, unit) => (unit === 'money' ? moneyShort(v) : `${decimal(v)} th`);
 
 function strokeFor(tone) {
   if (tone === 'safe') return 'var(--safe)';
@@ -1228,8 +1554,161 @@ function strokeFor(tone) {
 /** Chú giải màu cho biểu đồ. Không dùng chấm trang trí ở chỗ khác. */
 function legend(series) {
   return `<div class="row small" style="margin-top:10px">${series
-    .map((s) => `<span class="row" style="gap:6px"><span style="width:14px;height:2px;border-radius:2px;background:${strokeFor(s.tone)}"></span>${escapeHtml(s.name)}</span>`)
+    .map((s, i) => {
+      const dash = DASHES[i % DASHES.length];
+      const style = dash === 'none'
+        ? `background:${strokeFor(s.tone)}`
+        : `background:repeating-linear-gradient(90deg, ${strokeFor(s.tone)} 0 4px, transparent 4px 7px)`;
+      return `<span class="row" style="gap:6px"><span style="width:18px;height:2px;border-radius:2px;${style}"></span>${escapeHtml(s.name)}</span>`;
+    })
     .join('')}</div>`;
+}
+
+// ======================================================================
+// src/ui/motion.js
+// ======================================================================
+/**
+ * Lớp tăng cường chạy sau khi màn hình đã được dựng xong.
+ *
+ * Vì sao tách riêng: mọi hàm dựng giao diện là hàm thuần nhận trạng thái trả về
+ * chuỗi HTML, và đó là thứ bộ kiểm thử dựa vào. Nếu nhét chuyển động vào trong
+ * chúng thì hoặc phải giả lập DOM khi kiểm thử, hoặc phải bỏ kiểm thử tầng giao
+ * diện. Nên chuyển động sống ở đây, đọc DOM đã dựng và làm giàu thêm.
+ *
+ * Hệ quả quan trọng: HTML dựng ra đã chứa sẵn con số cuối cùng. Nếu trình duyệt
+ * không chạy được phần này, hoặc người dùng tắt hiệu ứng chuyển động, sản phẩm
+ * vẫn hiển thị đúng số. Chuyển động là lớp phủ, không phải điều kiện.
+ */
+
+
+const STILL = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/** Gọi một lần sau mỗi lần dựng lại màn hình. */
+function enhanceView(root) {
+  runCounters(root);
+  bindChartTips(root);
+}
+
+/* ------------------------------------------------------------------ đếm số */
+
+/**
+ * Con số chạy từ 0 lên giá trị thật.
+ *
+ * Chỉ dùng cho những con số là kết luận của một phép tính: lãi suất thực, điểm
+ * an toàn, bốn chỉ số nền. Chúng chạy lên để người xem hiểu đây là kết quả được
+ * tính ra chứ không phải chữ in sẵn. Không dùng cho số liệu tra bảng.
+ */
+function runCounters(root) {
+  const targets = root.querySelectorAll('[data-count]');
+  if (STILL()) return;
+
+  targets.forEach((el, i) => {
+    const to = Number(el.dataset.count);
+    if (!Number.isFinite(to)) return;
+
+    const final = el.textContent;
+    const kind = el.dataset.countKind || 'int';
+    const startAt = performance.now() + i * 70;
+    const DURATION = 780;
+
+    // Con số thật không bị xoá đi cho tới khi khung hình đầu tiên thật sự chạy.
+    // Trình duyệt tạm dừng requestAnimationFrame khi thẻ bị ẩn, và nếu xoá
+    // trước thì người dùng quay lại sẽ thấy một bảng chỉ số toàn số 0.
+    const step = (now) => {
+      if (now < startAt) { requestAnimationFrame(step); return; }
+      const t = Math.min((now - startAt) / DURATION, 1);
+      if (t >= 1) { el.textContent = final; return; }
+      el.textContent = formatCount(to * easeOut(t), kind);
+      requestAnimationFrame(step);
+    };
+
+    requestAnimationFrame(step);
+  });
+}
+
+const easeOut = (t) => 1 - (1 - t) ** 4;
+
+function formatCount(v, kind) {
+  if (kind === 'money') return money(v);
+  if (kind === 'pct1') return percent(v, 1);
+  if (kind === 'pct2') return percent(v, 2);
+  if (kind === 'dec1') return decimal(v, 1);
+  return String(Math.round(v));
+}
+
+/* -------------------------------------------------- vạch dò trên biểu đồ */
+
+/**
+ * Rê chuột dọc biểu đồ để đọc giá trị của mọi đường tại đúng tháng đó.
+ *
+ * Đây là chỗ câu chuyện đánh đổi nằm: hai phương án có thể cùng xếp loại nên
+ * cùng màu, và bằng mắt thì chỉ thấy hai đường gần nhau. Vạch dò cho biết tại
+ * tháng thứ mấy chúng tách ra và tách bao nhiêu.
+ */
+function bindChartTips(root) {
+  root.querySelectorAll('.chart-wrap').forEach((wrap) => {
+    const plot = wrap.querySelector('.chart-plot');
+    const svg = wrap.querySelector('.chart');
+    const tip = wrap.querySelector('.chart-tip');
+    if (!plot || !svg || !tip || !svg.dataset.chart) return;
+
+    let meta;
+    try { meta = JSON.parse(svg.dataset.chart); } catch { return; }
+
+    const cursor = svg.querySelector('.cursor');
+    const dots = [...plot.querySelectorAll('.chart-cursor-dot')];
+
+    // Toạ độ dùng chung một hệ phần trăm với lúc dựng, nên chỗ này không cần
+    // biết khung vẽ đang rộng bao nhiêu pixel.
+    const atY = (v) => 100 - ((v - meta.min) / (meta.max - meta.min)) * 100;
+    const valueAt = (s, i) => s.values[Math.min(i, s.values.length - 1)];
+
+    const move = (event) => {
+      const box = plot.getBoundingClientRect();
+      if (box.width === 0) return;
+
+      const ratio = (event.clientX - box.left) / box.width;
+      const index = Math.max(0, Math.min(Math.round(ratio * meta.span), meta.span));
+      const at = (index / meta.span) * 100;
+
+      cursor.setAttribute('x1', at * 10);
+      cursor.setAttribute('x2', at * 10);
+
+      let highest = 100;
+      meta.series.forEach((s, i) => {
+        const top = atY(valueAt(s, index));
+        highest = Math.min(highest, top);
+        if (dots[i]) { dots[i].style.left = `${at}%`; dots[i].style.top = `${top}%`; }
+      });
+
+      tip.innerHTML = `<div class="chart-tip__k">Tháng ${index}</div>${meta.series
+        .map((s) => `<div class="chart-tip__row">
+          <span class="chart-tip__swatch" style="background:${toneColour(s.tone)}"></span>
+          <span>${s.name}</span>
+          <b>${readout(valueAt(s, index), meta.unit)}</b>
+        </div>`)
+        .join('')}`;
+
+      // Kẹp lại để hộp không thò ra ngoài mép biểu đồ trên màn hình hẹp.
+      const half = tip.offsetWidth / 2 + 4;
+      tip.style.left = `${Math.max(half, Math.min((at / 100) * box.width, box.width - half))}px`;
+      tip.style.top = `${(highest / 100) * box.height}px`;
+      wrap.dataset.hover = 'on';
+    };
+
+    plot.addEventListener('pointermove', move);
+    plot.addEventListener('pointerdown', move);
+    plot.addEventListener('pointerleave', () => { wrap.dataset.hover = 'off'; });
+  });
+}
+
+const readout = (v, unit) => (unit === 'money' ? money(v) : `${decimal(v)} tháng`);
+
+function toneColour(tone) {
+  if (tone === 'safe') return 'var(--safe)';
+  if (tone === 'caution') return 'var(--caution)';
+  if (tone === 'risky' || tone === 'blocked') return 'var(--risk)';
+  return 'var(--ink)';
 }
 
 // ======================================================================
@@ -1403,11 +1882,11 @@ function welcomeView() {
       </div>
       <div class="grid-3" style="margin-top:18px">
         ${PRESETS.map((p, i) => `
-        <button class="panel rise" data-action="preset" data-id="${p.id}"
-                style="text-align:left;cursor:pointer;animation-delay:${0.12 + i * 0.06}s">
+        <button class="panel panel--action rise" data-action="preset" data-id="${p.id}"
+                style="animation-delay:${0.12 + i * 0.06}s">
           <h3>${escapeHtml(p.name)}</h3>
           <p class="small muted" style="margin-top:6px">${escapeHtml(p.summary)}</p>
-          <span class="small" style="display:inline-block;margin-top:12px">Mở hồ sơ này ↗</span>
+          <span class="small" style="display:inline-block;margin-top:12px">Mở hồ sơ này <span class="go" aria-hidden="true">↗</span></span>
         </button>`).join('')}
       </div>
     </div>
@@ -1430,11 +1909,18 @@ const STEPS = ['Thu nhập và chi phí', 'Tài sản và nợ', 'Mục tiêu', 
 function profileFormView(state) {
   const p = state.profile;
   const step = state.wizardStep;
+  const at = ((step + 1) / STEPS.length) * 100;
+
   return `
 <section class="view stack">
   <div>
     <p class="eyebrow">Bước ${step + 1} trên ${STEPS.length}</p>
     <h1 style="margin-top:8px">${STEPS[step]}</h1>
+    <div class="progress" style="margin-top:16px;max-width:340px"
+         role="progressbar" aria-valuemin="1" aria-valuemax="${STEPS.length}" aria-valuenow="${step + 1}"
+         aria-label="Tiến độ tạo hồ sơ">
+      <span class="progress__bar" style="--at:${at}%"></span>
+    </div>
   </div>
 
   <div class="shell-card">
@@ -1576,10 +2062,26 @@ function dashboardView(state) {
   </div>
 
   <div class="metrics">
-    ${metric('Dòng tiền dư mỗi tháng', money(b.surplus), `Tỷ lệ tiết kiệm ${percent(b.savingsRate)}`, surplusTone)}
-    ${metric('Quỹ dự phòng', `${decimal(b.runway)} tháng`, runwayNote(b.runway), runwayTone)}
-    ${metric('Nghĩa vụ nợ', percent(b.dti), b.dti === 0 ? 'Chưa có khoản vay nào' : `${money(b.debtPayments)} mỗi tháng`, dtiTone)}
-    ${metric('Chi phí tối thiểu', money(b.minimumSpend), 'Mức cần để duy trì cuộc sống', 'ink')}
+    ${metric({
+      label: 'Dòng tiền dư mỗi tháng', value: money(b.surplus), tone: surplusTone,
+      note: `Tỷ lệ tiết kiệm ${percent(b.savingsRate)}`, count: b.surplus, kind: 'money', at: 0,
+    })}
+    ${metric({
+      label: 'Quỹ dự phòng', tone: runwayTone, note: runwayNote(b.runway), at: 1,
+      // Chỉ phần số chạy lên, chữ "tháng" đứng yên bên cạnh.
+      value: Number.isFinite(b.runway) ? decimal(b.runway) : runwayMonths(b.runway),
+      suffix: Number.isFinite(b.runway) ? ' tháng' : '',
+      count: Number.isFinite(b.runway) ? b.runway : null, kind: 'dec1',
+    })}
+    ${metric({
+      label: 'Nghĩa vụ nợ', value: percent(b.dti), tone: dtiTone,
+      note: b.dti === 0 ? 'Chưa có khoản vay nào' : `${money(b.debtPayments)} mỗi tháng`,
+      count: b.dti, kind: 'pct1', at: 2,
+    })}
+    ${metric({
+      label: 'Chi phí tối thiểu', value: money(b.minimumSpend), tone: 'ink',
+      note: 'Mức cần để duy trì cuộc sống', count: b.minimumSpend, kind: 'money', at: 3,
+    })}
   </div>
 
   ${goals.length > 0 ? `
@@ -1588,8 +2090,9 @@ function dashboardView(state) {
       <div class="spread">
         <h2>Đường tới mục tiêu nếu giữ nguyên nhịp hiện tại</h2>
       </div>
-      <div style="margin-top:16px">${lineChart(series, { unit: 'money' })}</div>
+      <div style="margin-top:16px">${lineChart(series, { id: 'goals', unit: 'money' })}</div>
       ${legend(series)}
+      ${chartTable(series, 'money')}
       <div class="rows" style="margin-top:18px">
         ${goals.map((g) => {
           const eta = monthsToGoal(g.target, g.saved, b.surplus * g.allocWeight);
@@ -1617,21 +2120,32 @@ function dashboardView(state) {
     <h2>Bạn đang cân nhắc quyết định nào</h2>
     <div class="grid-2" style="margin-top:16px">
       ${DECISION_KINDS.map((k, i) => `
-      <button class="panel rise" data-action="pick-decision" data-kind="${k.id}"
-              style="text-align:left;cursor:pointer;animation-delay:${i * 0.05}s">
+      <button class="panel panel--action rise" data-action="pick-decision" data-kind="${k.id}"
+              style="animation-delay:${i * 0.05}s">
         <h3>${k.name}</h3>
         <p class="small muted" style="margin-top:6px">${k.blurb}</p>
-        <span class="small" style="display:inline-block;margin-top:12px">Ví dụ: ${k.example} ↗</span>
+        <span class="small" style="display:inline-block;margin-top:12px">Ví dụ: ${k.example} <span class="go" aria-hidden="true">↗</span></span>
       </button>`).join('')}
     </div>
   </div>
 </section>`;
 }
 
-function metric(label, value, note, tone) {
-  return `<div class="metric rise">
+/**
+ * Một thẻ chỉ số.
+ *
+ * `count` là giá trị số thô để lớp chuyển động cho chạy từ 0 lên. Chuỗi hiển
+ * thị đã nằm sẵn trong HTML nên nếu không có JavaScript chuyển động thì thẻ vẫn
+ * đúng. Truyền null khi con số không hữu hạn, lúc đó không có gì để đếm.
+ */
+function metric({ label, value, suffix = '', note, tone, count = null, kind = 'int', at = 0 }) {
+  const counter = count === null
+    ? value
+    : `<span data-count="${count}" data-count-kind="${kind}">${value}</span>`;
+
+  return `<div class="metric metric--${tone} rise" style="animation-delay:${(at * 0.07).toFixed(2)}s">
     <div class="metric__label">${label}</div>
-    <div class="metric__value figure t-${tone}">${value}</div>
+    <div class="metric__value figure t-${tone}">${counter}${suffix}</div>
     <div class="metric__note muted">${note}</div>
   </div>`;
 }
@@ -1804,12 +2318,17 @@ function compareView(state) {
     <div class="shell-card__core">
       <h2>Quỹ dự phòng trong 24 tháng tới</h2>
       <p class="small muted" style="margin-top:6px">
-        Đường nét đứt là ngưỡng thận trọng ${ASSUMPTIONS.runwayCaution} tháng.
+        Vùng tô nhạt nằm dưới ngưỡng thận trọng ${ASSUMPTIONS.runwayCaution} tháng.
+        Rê chuột dọc biểu đồ để đọc giá trị của cả ba phương án tại cùng một tháng.
       </p>
       <div style="margin-top:16px">
-        ${lineChart(runwaySeries, { unit: 'months', guideAt: ASSUMPTIONS.runwayCaution, guideLabel: 'ngưỡng thận trọng' })}
+        ${lineChart(runwaySeries, {
+          id: 'runway', unit: 'months', fillFirst: true,
+          guideAt: ASSUMPTIONS.runwayCaution, guideLabel: 'ngưỡng thận trọng',
+        })}
       </div>
       ${legend(runwaySeries)}
+      ${chartTable(runwaySeries, 'months')}
     </div>
   </div>
 
@@ -1825,19 +2344,30 @@ function compareView(state) {
 </section>`;
 }
 
-/** Ô phơi bày lãi suất thực. Đây là thứ ứng dụng ghi chép chi tiêu không làm được. */
+/**
+ * Ô phơi bày lãi suất thực. Đây là thứ ứng dụng ghi chép chi tiêu không làm được,
+ * và là chỗ người xem dừng mắt lâu nhất.
+ *
+ * Hai con số chạy lên từ 0 chứ không hiện sẵn. Lý do không phải để cho đẹp: khi
+ * hai con số cùng chạy cạnh nhau, mắt tự so sánh tốc độ và thấy ngay con số bên
+ * phải vượt xa con số bên trái. Đó chính là điều cần nói.
+ */
 function aprReveal(inst) {
   return `
 <div class="reveal-apr rise">
   <div>
     <div class="reveal-apr__k">Người bán quảng cáo</div>
-    <div class="reveal-apr__v figure muted">${percent(inst.advertisedApr, 1)}<span class="small">/năm</span></div>
+    <div class="reveal-apr__v figure muted">
+      <span data-count="${inst.advertisedApr}" data-count-kind="pct1">${percent(inst.advertisedApr, 1)}</span><span class="small">/năm</span>
+    </div>
     <p class="small muted" style="margin-top:4px">Lãi phẳng ${percent(inst.advertisedApr / 12, 1)} mỗi tháng, quy đổi thẳng ra năm</p>
   </div>
   <div class="reveal-apr__arrow" aria-hidden="true">→</div>
   <div>
     <div class="reveal-apr__k">Lãi suất thực bạn đang trả</div>
-    <div class="reveal-apr__v figure t-risky">${percent(inst.trueApr, 2)}<span class="small">/năm</span></div>
+    <div class="reveal-apr__v figure t-risky">
+      <span data-count="${inst.trueApr}" data-count-kind="pct2">${percent(inst.trueApr, 2)}</span><span class="small">/năm</span>
+    </div>
     <p class="small" style="margin-top:4px">
       Gấp <strong>${decimal(inst.spread, 2)} lần</strong>, tức thêm ${money(inst.totalInterest)} tiền lãi
     </p>
@@ -1861,16 +2391,19 @@ function optionCard(result, index, isCheapest) {
         <span class="chip chip--${score.band}" style="margin-top:6px">${BAND_LABEL[score.band]}</span>
         ${isCheapest ? '<span class="chip" style="margin-top:6px;background:var(--surface-sunken);color:var(--muted)">Ít tiền mặt nhất</span>' : ''}
       </div>
-      <div class="option__score">
-        <b class="figure t-${score.band}">${decimal(score.total)}</b>
-        <div class="small muted">điểm an toàn</div>
+      <div class="option__score t-${score.band}">
+        <b class="figure"><span data-count="${score.total}" data-count-kind="dec1">${decimal(score.total)}</span></b>
+        <div class="small muted">điểm an toàn trên 100</div>
+        <div class="meter" role="img" aria-label="Điểm ${decimal(score.total)} trên 100">
+          <span class="meter__fill" style="--at:${(score.total / 100).toFixed(3)}"></span>
+        </div>
       </div>
     </div>
 
     <div class="stats">
       ${stat('Tổng tiền chi', money(outcome.totalCash))}
       ${stat('Giá trị hiện tại', money(outcome.presentValue))}
-      ${stat('Quỹ dự phòng còn', `${decimal(outcome.runwayAfter)} tháng`)}
+      ${stat('Quỹ dự phòng còn', runwayMonths(outcome.runwayAfter))}
       ${stat('Nghĩa vụ nợ', percent(outcome.dtiAfter))}
     </div>
 
@@ -1994,6 +2527,12 @@ function assumptionsView() {
     <button class="btn btn--ghost" data-action="go" data-view="welcome">Về trang đầu</button>
     <button class="btn btn--ghost" data-action="wipe">Xoá hồ sơ khỏi máy này</button>
   </div>
+
+  <p class="small muted" style="max-width:70ch">
+    DeciFin là công cụ hỗ trợ ra quyết định dựa trên các giả định do bạn khai báo và các tham số mô
+    hình được công bố công khai ở trên. Công cụ không phải là tư vấn tài chính, tư vấn đầu tư hay
+    khuyến nghị mua bán sản phẩm tài chính. Quyền quyết định cuối cùng thuộc về bạn.
+  </p>
 </section>`;
 }
 
@@ -2006,8 +2545,10 @@ function assumptionsView() {
  *
  * Cách render bằng chuỗi được chọn có chủ đích: nó khiến mọi hàm dựng giao diện
  * trở thành hàm thuần nhận trạng thái trả về chuỗi, nên kiểm thử được bằng Node
- * mà không cần trình duyệt giả lập.
+ * mà không cần trình duyệt giả lập. Mọi thứ cần tới DOM thật, kể cả chuyển động,
+ * nằm sau bước dựng chứ không nằm trong nó.
  */
+
 
 
 
@@ -2038,6 +2579,17 @@ const STEP_LABELS = [
   ['compare', 'So sánh'],
 ];
 
+const VIEW_NAMES = {
+  welcome: 'Trang chào',
+  profile: 'Tạo hồ sơ',
+  dashboard: 'Bảng chỉ số',
+  decision: 'Nhập quyết định',
+  compare: 'So sánh kết quả',
+  assumptions: 'Giả định và giới hạn',
+};
+
+let lastView = null;
+
 function mount(root) {
   subscribe(() => render(root));
   root.addEventListener('click', onClick);
@@ -2051,30 +2603,83 @@ function mount(root) {
 function render(root) {
   const view = VIEWS[state.view] || welcomeView;
   root.innerHTML = `
+    <a class="skip" href="#main">Bỏ qua phần điều hướng</a>
     ${topbar()}
-    <main><div class="shell">${view(state)}</div></main>
+    <main id="main" tabindex="-1"><div class="shell">${notice()}${view(state)}</div></main>
     <footer class="foot"><div class="shell">
       DeciFin, bản MVP. Mã nguồn mở theo giấy phép MIT. Mọi tính toán chạy trên thiết bị của bạn.
-    </div></footer>`;
-  root.scrollIntoView({ block: 'start' });
+    </div></footer>
+    <p class="sr-only" role="status" aria-live="polite">${VIEW_NAMES[state.view] || ''}</p>`;
+
+  // Người dùng bàn phím và trình đọc màn hình cần biết trang đã đổi. Nếu không
+  // dời tiêu điểm, họ vẫn đứng ở nút vừa bấm trong khi nội dung đã thay hết.
+  if (state.view !== lastView) {
+    window.scrollTo({ top: 0 });
+    root.querySelector('#main').focus({ preventScroll: true });
+    lastView = state.view;
+  }
+  // Có lỗi thì kéo thẳng tới chỗ báo lỗi. Người dùng đang ở cuối trang bấm nút
+  // sẽ không thấy gì nếu thông báo nằm im trên đầu.
+  if (state.notice) root.querySelector('.notice')?.focus();
+
+  enhanceView(root);
 }
 
 function topbar() {
   const index = STEP_LABELS.findIndex(([id]) => id === state.view);
+  const at = index < 0 ? 0 : (index / (STEP_LABELS.length - 1)) * 100;
+
   return `
 <header class="topbar"><div class="shell topbar__inner">
   <button class="brand" data-action="go" data-view="welcome" style="background:none;border:0;cursor:pointer">
     <span class="brand__mark" aria-hidden="true">D</span> DeciFin
   </button>
   <nav class="steps" aria-label="Tiến trình">
-    ${STEP_LABELS.map(([id, label], i) => `
-      <span class="steps__item" aria-current="${id === state.view}">${i + 1}. ${label}</span>`).join('')}
+    ${STEP_LABELS.map(([id, label], i) => {
+      const open = reachable(id);
+      return `<button class="steps__item" data-reachable="${open}" ${open ? `data-action="go" data-view="${id}"` : 'disabled'}
+              ${id === state.view ? 'aria-current="step"' : ''}>${i + 1}. ${label}</button>`;
+    }).join('')}
   </nav>
   <span class="topbar__spacer"></span>
-  <button class="btn btn--ghost" data-action="theme" aria-label="Đổi nền sáng tối"
-          style="padding:8px 14px">Nền</button>
-</div></header>`;
+  <button class="btn btn--ghost" data-action="theme" style="padding:8px 14px">${themeLabel()}</button>
+</div>
+<div class="steps__rail" style="--at:${at}%" aria-hidden="true"></div></header>`;
 }
+
+/** Bước nào đã đi tới được. Bấm vào bước chưa có dữ liệu thì chỉ ra màn hình rỗng. */
+function reachable(id) {
+  if (id === 'profile') return true;
+  if (id === 'compare') return state.results !== null;
+  return state.profile.income > 0;
+}
+
+/**
+ * Khung báo lỗi và hỏi lại, dựng ngay trong trang.
+ *
+ * Thay cho window.alert và window.confirm. Hộp thoại của trình duyệt cắt ngang
+ * mạch làm việc, không theo được hệ màu sáng tối, và trên điện thoại nó che mất
+ * đúng chỗ vừa nhập sai.
+ */
+function notice() {
+  if (!state.notice) return '';
+  const { tone, text, items, confirm } = state.notice;
+
+  return `<div class="notice ${tone === 'ask' ? 'notice--ask' : ''}" role="alert" tabindex="-1" style="margin-bottom:20px">
+  <span class="notice__mark" aria-hidden="true">${tone === 'ask' ? '?' : '!'}</span>
+  <div>
+    <strong>${escapeHtml(text)}</strong>
+    ${items && items.length > 0 ? `<ul>${items.map((t) => `<li>${escapeHtml(t)}</li>`).join('')}</ul>` : ''}
+    ${confirm ? `<div class="row" style="margin-top:12px">
+      <button class="btn" data-action="${confirm.action}" style="padding:8px 15px">${escapeHtml(confirm.label)}</button>
+      <button class="btn btn--ghost" data-action="dismiss" style="padding:8px 15px">Huỷ</button>
+    </div>` : ''}
+  </div>
+</div>`;
+}
+
+/** Đổi màn hình và luôn dọn thông báo cũ, để lỗi của bước trước không đi theo. */
+const go = (patch) => update({ notice: null, ...patch });
 
 function onClick(event) {
   const trigger = event.target.closest('[data-action]');
@@ -2082,15 +2687,17 @@ function onClick(event) {
   const { action } = trigger.dataset;
 
   const handlers = {
-    go: () => update({ view: trigger.dataset.view }),
+    go: () => go({ view: trigger.dataset.view }),
     theme: toggleTheme,
-    'start-blank': () => update({ profile: structuredClone(EMPTY_PROFILE), wizardStep: 0, view: 'profile' }),
+    dismiss: () => update({ notice: null }),
+    'start-blank': () => go({ profile: structuredClone(EMPTY_PROFILE), wizardStep: 0, view: 'profile' }),
     preset: () => loadPreset(trigger.dataset.id),
-    'wizard-back': () => update({ wizardStep: Math.max(state.wizardStep - 1, 0) }),
+    'wizard-back': () => go({ wizardStep: Math.max(state.wizardStep - 1, 0) }),
     'wizard-next': advanceWizard,
-    'pick-decision': () => update({ decisionKind: trigger.dataset.kind, view: 'decision' }),
+    'pick-decision': () => go({ decisionKind: trigger.dataset.kind, view: 'decision' }),
     simulate: runSimulation,
-    wipe: wipeProfile,
+    wipe: askWipe,
+    'wipe-confirm': wipeProfile,
   };
 
   if (handlers[action]) {
@@ -2103,7 +2710,7 @@ function loadPreset(id) {
   const preset = PRESETS.find((p) => p.id === id);
   if (!preset) return;
   const profile = structuredClone(preset.profile);
-  update({ profile, view: 'dashboard' });
+  go({ profile, view: 'dashboard' });
   saveProfile();
 }
 
@@ -2143,14 +2750,14 @@ function advanceWizard() {
   if (state.wizardStep === 3) {
     const errors = validate(profile);
     if (errors.length > 0) {
-      window.alert(errors.join('\n'));
+      update({ profile, notice: { tone: 'error', text: 'Hồ sơ chưa dùng được:', items: errors } });
       return;
     }
-    update({ profile, view: 'dashboard' });
+    go({ profile, view: 'dashboard' });
     saveProfile();
     return;
   }
-  update({ profile, wizardStep: state.wizardStep + 1 });
+  go({ profile, wizardStep: state.wizardStep + 1 });
 }
 
 function runSimulation() {
@@ -2163,7 +2770,10 @@ function runSimulation() {
   try {
     built = BUILDERS[state.decisionKind](read, state.profile);
   } catch (error) {
-    if (error instanceof ScenarioError) { window.alert(error.message); return; }
+    if (error instanceof ScenarioError) {
+      update({ notice: { tone: 'error', text: error.message } });
+      return;
+    }
     throw error;
   }
 
@@ -2171,22 +2781,56 @@ function runSimulation() {
     ? rankScenarios(built.scenarios, built.extras || {})
     : rank(state.profile, built.events, built.extras || {});
 
-  update({ results, installment: built.installment || null, view: 'compare' });
+  go({ results, installment: built.installment || null, view: 'compare' });
+}
+
+function askWipe() {
+  update({
+    notice: {
+      tone: 'ask',
+      text: 'Xoá hồ sơ khỏi trình duyệt này? Thao tác này không hoàn tác được.',
+      confirm: { label: 'Xoá hồ sơ', action: 'wipe-confirm' },
+    },
+  });
 }
 
 function wipeProfile() {
-  if (!window.confirm('Xoá hồ sơ khỏi trình duyệt này?')) return;
   clearProfile();
-  update({ profile: structuredClone(EMPTY_PROFILE), results: null, view: 'welcome' });
+  go({ profile: structuredClone(EMPTY_PROFILE), results: null, installment: null, view: 'welcome' });
+}
+
+/**
+ * Nhãn của nút đổi nền nói ra việc nó sắp làm, không nói tình trạng hiện tại.
+ * Chữ "Nền" một mình thì không ai đoán được bấm vào sẽ ra gì.
+ */
+function themeLabel() {
+  return document.documentElement.dataset.theme === 'dark' ? 'Nền sáng' : 'Nền tối';
 }
 
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
   writeTheme(theme);
+
+  // Đổi nền không dựng lại màn hình, nên nhãn phải tự cập nhật tại chỗ.
+  const button = document.querySelector('[data-action="theme"]');
+  if (button) button.textContent = themeLabel();
 }
 
+/**
+ * Đổi nền sáng tối bằng cách hoà hai ảnh vào nhau.
+ *
+ * Đổi thẳng thì cả trang nháy một cái, mắt mất một nhịp để bám lại chỗ đang
+ * đọc. Trình duyệt nào chưa có View Transitions thì rơi về đúng hành vi cũ.
+ */
 function toggleTheme() {
-  applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+  const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (still || typeof document.startViewTransition !== 'function') {
+    applyTheme(next);
+    return;
+  }
+  document.startViewTransition(() => applyTheme(next));
 }
 
 mount(document.getElementById('app'));

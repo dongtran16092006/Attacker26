@@ -28,6 +28,7 @@ const MODULES = [
   'src/ui/presets.js',
   'src/ui/state.js',
   'src/ui/components/chart.js',
+  'src/ui/motion.js',
   'src/ui/scenarios.js',
   'src/ui/views/welcome.js',
   'src/ui/views/profileForm.js',

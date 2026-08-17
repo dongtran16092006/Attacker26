@@ -7,10 +7,12 @@
   "author": "Đội 5 đích 1 hướng",
   "scripts": {
     "test": "node --test \"test/*.test.js\"",
-    "start": "node tools/serve.js"
+    "start": "node tools/serve.js",
+    "server": "node server/index.js",
+    "mock-bank": "node -e \"import('./server/mockBankApi.js').then(m => m.startMockBankApi())\""
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22.5.0"
   },
   "keywords": [
     "personal-finance",

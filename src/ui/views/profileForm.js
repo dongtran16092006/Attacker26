@@ -5,11 +5,18 @@ const STEPS = ['Thu nhập và chi phí', 'Tài sản và nợ', 'Mục tiêu', 
 export function profileFormView(state) {
   const p = state.profile;
   const step = state.wizardStep;
+  const at = ((step + 1) / STEPS.length) * 100;
+
   return `
 <section class="view stack">
   <div>
     <p class="eyebrow">Bước ${step + 1} trên ${STEPS.length}</p>
     <h1 style="margin-top:8px">${STEPS[step]}</h1>
+    <div class="progress" style="margin-top:16px;max-width:340px"
+         role="progressbar" aria-valuemin="1" aria-valuemax="${STEPS.length}" aria-valuenow="${step + 1}"
+         aria-label="Tiến độ tạo hồ sơ">
+      <span class="progress__bar" style="--at:${at}%"></span>
+    </div>
   </div>
 
   <div class="shell-card">

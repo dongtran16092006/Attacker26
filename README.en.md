@@ -69,10 +69,10 @@ A server is needed only because browsers block ES modules over `file://`.
 Run the test suite:
 
 ```bash
-npm test           # 51 tests via the built-in node:test runner
+npm test           # 57 tests via the built-in node:test runner
 ```
 
-Only requirement: Node 20 or newer.
+Only requirement: Node 22.5 or newer (the backend uses `node:sqlite`, built into Node since 22.5).
 
 ## Architecture
 
@@ -82,7 +82,7 @@ Three choices worth explaining:
 
 **Zero dependencies.** The project has none. For a financial tool running on a
 user's machine, every dependency is supply chain risk. Charts are hand-drawn SVG
-in 90 lines.
+in about 190 lines.
 
 **No server, no database.** Income, debt and asset figures are sensitive personal
 data. During product validation the safest handling is to collect nothing. The
@@ -127,7 +127,7 @@ sell any financial product. The final decision belongs to the user.
 ```
 src/engine/     financial algorithms, no DOM knowledge
 src/ui/         six screens, SVG charts, state management
-test/           51 tests running on node:test
+test/           57 tests running on node:test
 tools/          static server, diagram generator, preview generator
 docs/           architecture, algorithm spec, all-screens preview
 ```
