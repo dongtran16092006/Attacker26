@@ -9,7 +9,9 @@ import { createStore } from './store.js';
 import { buildRoutes, HttpError } from './routes.js';
 import { sendJson } from './http.js';
 
-const DEMO_HTML_PATH = join(dirname(fileURLToPath(import.meta.url)), 'demo.html');
+const SERVER_DIR = dirname(fileURLToPath(import.meta.url));
+const DEMO_HTML_PATH = join(SERVER_DIR, 'demo.html');
+const APP_HTML_PATH = join(SERVER_DIR, '..', 'DeciFin_UX_Polished_1__1_ (5).html');
 
 export function createApp({ dbPath } = {}) {
   const db = openDb(dbPath);
@@ -30,11 +32,20 @@ export function createApp({ dbPath } = {}) {
 
     const url = new URL(req.url, 'http://localhost');
 
-    // Trang test bấm tay cho backend — không phải giao diện sản phẩm (xem src/ui).
+    // Giao diện chính phục vụ cùng API trên Render; /demo giữ lại trang test backend.
     if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/demo')) {
-      const html = readFileSync(DEMO_HTML_PATH, 'utf8');
+      const html = readFileSync(url.pathname === '/demo' ? DEMO_HTML_PATH : APP_HTML_PATH, 'utf8');
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end(html);
+      return;
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api-config.js') {
+      res.writeHead(200, {
+        'Content-Type': 'application/javascript; charset=utf-8',
+        'Cache-Control': 'no-store',
+      });
+      res.end('window.DECIFIN_API_BASE = "";');
       return;
     }
 
