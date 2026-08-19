@@ -4012,7 +4012,19 @@ mount(document.getElementById('app'));
   // của file này → optional chaining trên một identifier chưa khai báo vẫn ném ReferenceError,
   // gây lỗi console mỗi khi bấm "Lưu giả định". Thay bằng toast cục bộ, dùng chung style .df-toast đã hợp nhất.
   function plusToast(text){const old=document.querySelector('.df-plus-toast');if(old)old.remove();const e=document.createElement('div');e.className='df-toast df-plus-toast';e.textContent=text;document.body.appendChild(e);setTimeout(()=>e.remove(),3200)}
-  function ensureButton(){const bar=document.querySelector('.topbar__inner');if(!bar||bar.querySelector('#dfplus-open'))return;if(!bar.querySelector('.dfplus-btn')){const b=document.createElement('button');b.id='dfplus-open';b.className='btn btn--ghost dfplus-btn';b.textContent='✦ DeciFin Plus';b.addEventListener('click',()=>openPlus());bar.appendChild(b)}}
+  function ensureButton(){
+    const sidebar=document.querySelector('.df-sidebar-inner');
+    const target=sidebar?.querySelector('.df-sidebar-spacer');
+    const existing=document.querySelector('#dfplus-open');
+    if(existing){if(target&&!target.contains(existing))target.appendChild(existing);return}
+    const b=document.createElement('button');
+    b.id='dfplus-open';b.className='btn dfplus-btn dfplus-sidebar-btn';
+    b.type='button';b.textContent='✦ DeciFin Plus';
+    b.addEventListener('click',()=>openPlus());
+    if(target)target.appendChild(b);
+    else if(sidebar)sidebar.appendChild(b);
+    else document.querySelector('.topbar__inner')?.appendChild(b);
+  }
   // DECIFIN PLUS UX REFACTOR: header nâng cấp thành badge + tên sản phẩm + chip "đã mở khoá".
   // Không có logic giá/subscription thật trong codebase (PKEY chỉ lưu giả định inflation/growth),
   // nên không hiển thị CTA "Nâng cấp" hay giá — chỉ phản ánh đúng trạng thái: mọi tab đều đã mở sẵn.
@@ -5465,6 +5477,8 @@ body.df-focus-active .df-health-page > [data-action="pick-decision"]{
 </script>
 </body>
 <style id="decifin-dark-card-fix">
+.dfplus-sidebar-btn{display:flex!important;width:100%;justify-content:center;align-items:center;margin:16px 0 14px!important;min-height:48px;border-radius:999px!important;font-weight:800!important}
+.df-sidebar-spacer{display:flex;flex-direction:column;justify-content:flex-end}
 :root[data-theme="dark"] .panel,
 :root[data-theme="dark"] .panel--action,
 :root[data-theme="dark"] .option,
