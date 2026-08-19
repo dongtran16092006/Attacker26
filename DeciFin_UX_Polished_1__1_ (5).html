@@ -4323,8 +4323,6 @@ mount(document.getElementById('app'));
         <div id="df-auth-msg"></div>
         <button class="df-auth__primary" id="df-login-btn">Đăng nhập →</button>
       </form>
-      <div class="df-auth__or"><span>Hoặc tiếp tục với</span></div>
-      <button class="df-auth__social" type="button" data-demo-social>G tiếp tục với Google</button>
       <p class="df-auth__switch">Chưa có tài khoản? <button class="df-auth__link" data-auth="register">Đăng ký miễn phí</button></p>
       <p class="df-auth__legal">Bản standalone đang sử dụng xác thực demo cục bộ. Không dùng cho tài khoản thật.</p>`;
   }
@@ -4342,8 +4340,6 @@ mount(document.getElementById('app'));
         <div id="df-auth-msg"></div>
         <button class="df-auth__primary" id="df-register-btn">Tạo tài khoản miễn phí →</button>
       </form>
-      <div class="df-auth__or"><span>Hoặc đăng ký với</span></div>
-      <button class="df-auth__social" type="button" data-demo-social>G tiếp tục với Google</button>
       <p class="df-auth__switch">Đã có tài khoản? <button class="df-auth__link" data-auth="login">Đăng nhập</button></p>
       <p class="df-auth__legal">Demo auth chỉ lưu phiên và tài khoản cục bộ trên thiết bị này.</p>`;
   }
@@ -4446,7 +4442,6 @@ mount(document.getElementById('app'));
   function bind(){
     document.querySelectorAll('[data-auth]').forEach(b=>b.onclick=()=>show(b.dataset.auth));
     document.querySelectorAll('[data-show]').forEach(b=>b.onclick=()=>{const i=$('#'+b.dataset.show);i.type=i.type==='password'?'text':'password';b.textContent=i.type==='password'?'Hiện':'Ẩn'});
-    $('[data-demo-social]')?.addEventListener('click',()=>{msg('Google OAuth chưa kết nối trong bản standalone. Bạn có thể dùng email demo để trình diễn.','success')});
     $('#df-login-form')?.addEventListener('submit',async e=>{
       e.preventDefault();const btn=$('#df-login-btn');btn.disabled=true;btn.textContent='Đang đưa bạn trở lại DeciFin…';
       const email=$('#df-email').value.trim().toLowerCase();const password=$('#df-password').value;
