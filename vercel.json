@@ -1,0 +1,8 @@
+{
+  "cleanUrls": true,
+  "rewrites": [{ "source": "/", "destination": "/DeciFin_UX_Polished_1__1_ (5).html" }],
+  "headers": [{
+    "source": "/api-config.js",
+    "headers": [{ "key": "Cache-Control", "value": "no-store" }]
+  }]
+}

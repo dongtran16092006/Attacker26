@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: decifin-api
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm run server
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DECIFIN_CORS_ORIGIN
+        sync: false
+      - key: DECIFIN_ENC_KEY
+        sync: false
