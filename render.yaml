@@ -3,11 +3,14 @@ services:
     name: decifin-api
     runtime: node
     plan: free
+    healthCheckPath: /api/health
     buildCommand: npm install
     startCommand: npm run server
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NODE_VERSION
+        value: 24.11.1
       - key: DECIFIN_CORS_ORIGIN
         sync: false
       - key: DECIFIN_ENC_KEY
