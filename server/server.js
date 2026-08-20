@@ -11,7 +11,7 @@ import { sendJson } from './http.js';
 
 const SERVER_DIR = dirname(fileURLToPath(import.meta.url));
 const DEMO_HTML_PATH = join(SERVER_DIR, 'demo.html');
-const APP_HTML_PATH = join(SERVER_DIR, '..', 'DeciFin_UX_Polished_1__1_ (5).html');
+const APP_HTML_PATH = join(SERVER_DIR, '..', 'DeciFin_UX_Polished_Financial_Intelligence_v3_NavFixed__2_ (5).html');
 
 export function createApp({ dbPath } = {}) {
   const db = openDb(dbPath);
