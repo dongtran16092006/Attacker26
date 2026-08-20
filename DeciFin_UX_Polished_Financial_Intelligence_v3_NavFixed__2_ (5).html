@@ -75,6 +75,13 @@ main>.shell{max-width:1180px}
 .dfj-heat-cell:after{bottom:calc(100% + 8px)!important;top:auto!important;z-index:20!important}
 .dfj-heat-cell:hover:after,.dfj-heat-cell:focus-visible:after{transform:translate(-50%,0) scale(1)!important}
 </style>
+<style id="decifin-journey-butterfly-layer-fix">
+/* The journey connector belongs behind timeline cards, never across their text. */
+.dfj-timeline-wrap{isolation:isolate}
+.dfj-butterfly-svg{z-index:0!important}
+.dfj-timeline{z-index:1;isolation:isolate}
+.dfj-timeline-card{z-index:2}
+</style>
 <style id="decifin-auth-scroll-fix">
 .df-auth{overflow-y:auto!important;overflow-x:hidden!important;scrollbar-width:none!important}
 .df-auth::-webkit-scrollbar{width:0!important;height:0!important;display:none!important}
