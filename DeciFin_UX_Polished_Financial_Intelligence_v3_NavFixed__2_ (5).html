@@ -63,11 +63,40 @@ main>.shell{max-width:1180px}
   .df-v6-dialog{border-radius:18px}
 }
 </style>
+<style id="decifin-auth-scroll-fix">
+.df-auth{overflow-y:auto!important;overflow-x:hidden!important;scrollbar-width:none!important}
+.df-auth::-webkit-scrollbar{width:0!important;height:0!important;display:none!important}
+.df-auth__hero,.df-auth__right{overflow:visible!important;min-height:100vh;box-sizing:border-box}
+.df-auth__hero{overflow:hidden!important}
+@media(max-width:700px){.df-auth__hero{min-height:0}.df-auth__right{min-height:100vh}}
+</style>
 <style id="decifin-auth-crop-fix">
 .df-auth__hero{justify-content:flex-start!important;overflow-y:auto!important;padding-top:clamp(42px,6vh,72px)!important;padding-bottom:42px!important}
 .df-auth__right{align-items:flex-start!important;overflow-y:auto!important;padding-top:clamp(42px,8vh,90px)!important;padding-bottom:48px!important}
 @media(max-width:900px){.df-auth__hero{padding-top:36px!important}.df-auth__right{padding-top:36px!important}}
 @media(max-width:700px){.df-auth__right{padding-top:28px!important;padding-bottom:32px!important}}
+</style>
+<style id="decifin-auth-single-scrollbar-fix">
+/* Keep one page scrollbar for auth; the two columns must not scroll independently. */
+.df-auth{
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  scrollbar-width:thin!important;
+  scrollbar-color:rgba(98,86,217,.48) transparent!important;
+}
+.df-auth::-webkit-scrollbar{width:10px!important;height:10px!important;display:block!important}
+.df-auth::-webkit-scrollbar-track{background:transparent!important}
+.df-auth::-webkit-scrollbar-thumb{background:rgba(98,86,217,.48)!important;border:3px solid transparent!important;border-radius:999px!important;background-clip:padding-box!important}
+.df-auth__hero,.df-auth__right{
+  overflow:visible!important;
+  min-height:100vh!important;
+  height:auto!important;
+  box-sizing:border-box!important;
+}
+@media(max-width:700px){
+  .df-auth__hero{min-height:0!important}
+  .df-auth__right{min-height:100vh!important}
+}
 </style>
 <style id="decifin-demo-account-style">
 .df-demo-account{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:16px;padding:12px 14px;border:1px dashed var(--line-strong);border-radius:14px;background:var(--surface-sunken);font-size:12px}
