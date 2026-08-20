@@ -63,6 +63,12 @@ main>.shell{max-width:1180px}
   .df-v6-dialog{border-radius:18px}
 }
 </style>
+<style id="decifin-onboard-snapshot-contrast-fix">
+/* Snapshot tiles are light, so do not inherit the visual panel's white text. */
+.df-onboard__visual .df-snapshot div{background:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.7)}
+.df-onboard__visual .df-snapshot div span{color:#6256D9!important}
+.df-onboard__visual .df-snapshot div b{color:#182653!important}
+</style>
 <style id="decifin-auth-scroll-fix">
 .df-auth{overflow-y:auto!important;overflow-x:hidden!important;scrollbar-width:none!important}
 .df-auth::-webkit-scrollbar{width:0!important;height:0!important;display:none!important}
