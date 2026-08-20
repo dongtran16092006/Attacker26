@@ -5360,10 +5360,7 @@ body{background:var(--paper);color:var(--ink)}
       if(filter){
         e.preventDefault();
         e.stopPropagation();
-        state.journeyFilter=filter.dataset.journeyFilter;
-        root.querySelectorAll('[data-journey-filter]').forEach(button=>{
-          button.classList.toggle('active',button===filter);
-        });
+        if(typeof update==='function') update({journeyFilter:filter.dataset.journeyFilter,view:'journey'});
         return;
       }
       const day=e.target.closest('[data-journey-day]');
