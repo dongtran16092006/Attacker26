@@ -69,6 +69,11 @@ main>.shell{max-width:1180px}
 .df-onboard__visual .df-snapshot div span{color:#6256D9!important}
 .df-onboard__visual .df-snapshot div b{color:#182653!important}
 </style>
+<style id="decifin-journey-tooltip-ui-fix">
+/* Keep heatmap hints below the grid so they never cover the Journey heading. */
+.dfj-heat-cell:after{bottom:auto!important;top:calc(100% + 8px)!important;z-index:20!important}
+.dfj-heat-cell:hover:after,.dfj-heat-cell:focus-visible:after{transform:translate(-50%,0) scale(1)!important}
+</style>
 <style id="decifin-auth-scroll-fix">
 .df-auth{overflow-y:auto!important;overflow-x:hidden!important;scrollbar-width:none!important}
 .df-auth::-webkit-scrollbar{width:0!important;height:0!important;display:none!important}
