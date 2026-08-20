@@ -97,6 +97,12 @@ main>.shell{max-width:1180px}
   .df-auth__hero{min-height:0!important}
   .df-auth__right{min-height:100vh!important}
 }
+@media(min-width:701px){
+  .df-auth{height:100dvh!important;overflow:hidden!important}
+  .df-auth__hero,.df-auth__right{height:100dvh!important;min-height:0!important}
+  .df-auth__hero{overflow:hidden!important}
+  .df-auth__right{overflow-y:auto!important;overflow-x:hidden!important}
+}
 </style>
 <style id="decifin-demo-account-style">
 .df-demo-account{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:16px;padding:12px 14px;border:1px dashed var(--line-strong);border-radius:14px;background:var(--surface-sunken);font-size:12px}
