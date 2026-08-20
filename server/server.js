@@ -16,6 +16,11 @@ const APP_HTML_PATH = join(SERVER_DIR, '..', 'DeciFin_UX_Polished_Financial_Inte
 export function createApp({ dbPath } = {}) {
   const db = openDb(dbPath);
   const store = createStore(db);
+  if (process.env.DECIFIN_SEED_DEMO === 'true') {
+    try { store.createUser('demo@decifin.vn', 'Demo@12345'); } catch (error) {
+      if (error.status !== 409) throw error;
+    }
+  }
   const router = buildRoutes(store);
   const allowedOrigin = process.env.DECIFIN_CORS_ORIGIN || '*';
 

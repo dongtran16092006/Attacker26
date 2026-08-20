@@ -63,6 +63,11 @@ main>.shell{max-width:1180px}
   .df-v6-dialog{border-radius:18px}
 }
 </style>
+<style id="decifin-demo-account-style">
+.df-demo-account{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:16px;padding:12px 14px;border:1px dashed var(--line-strong);border-radius:14px;background:var(--surface-sunken);font-size:12px}
+.df-demo-account div{display:grid;gap:3px}.df-demo-account strong{color:var(--ink)}.df-demo-account span{color:var(--muted)}.df-demo-account b{color:var(--ink);font-weight:800}.df-demo-account button{white-space:nowrap}
+@media(max-width:480px){.df-demo-account{align-items:flex-start;flex-direction:column}.df-demo-account button{align-self:flex-end}}
+</style>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%2316171a'/><text x='16' y='22' font-family='sans-serif' font-size='17' font-weight='700' fill='%23faf9f6' text-anchor='middle'>D</text></svg>">
 <style>
 /* =============================================================================
@@ -4484,6 +4489,10 @@ mount(document.getElementById('app'));
         <div id="df-auth-msg"></div>
         <button class="df-auth__primary" id="df-login-btn">Đăng nhập →</button>
       </form>
+      <div class="df-demo-account" role="note">
+        <div><strong>🧪 Tài khoản demo</strong><span>Email: <b>demo@decifin.vn</b></span><span>Mật khẩu: <b>Demo@12345</b></span></div>
+        <button type="button" class="df-auth__link" data-fill-demo>Điền nhanh</button>
+      </div>
       <p class="df-auth__switch">Chưa có tài khoản? <button class="df-auth__link" data-auth="register">Đăng ký miễn phí</button></p>
       <p class="df-auth__legal">Bản standalone đang sử dụng xác thực demo cục bộ. Không dùng cho tài khoản thật.</p>`;
   }
@@ -4603,6 +4612,7 @@ mount(document.getElementById('app'));
   function bind(){
     document.querySelectorAll('[data-auth]').forEach(b=>b.onclick=()=>show(b.dataset.auth));
     document.querySelectorAll('[data-show]').forEach(b=>b.onclick=()=>{const i=$('#'+b.dataset.show);i.type=i.type==='password'?'text':'password';b.textContent=i.type==='password'?'Hiện':'Ẩn'});
+    $('[data-fill-demo]')?.addEventListener('click',()=>{ $('#df-email').value='demo@decifin.vn'; $('#df-password').value='Demo@12345'; $('#df-email').focus(); });
     $('#df-login-form')?.addEventListener('submit',async e=>{
       e.preventDefault();const btn=$('#df-login-btn');btn.disabled=true;btn.textContent='Đang đưa bạn trở lại DeciFin…';
       const email=$('#df-email').value.trim().toLowerCase();const password=$('#df-password').value;
@@ -6011,4 +6021,3 @@ body.df-plus-lock{overflow:hidden}
   .df-sidebar-tools{display:none!important}
 }
 </style>
-
