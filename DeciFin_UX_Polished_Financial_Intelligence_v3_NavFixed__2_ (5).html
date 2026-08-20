@@ -5358,6 +5358,8 @@ body{background:var(--paper);color:var(--ink)}
     root.addEventListener('click',function(e){
       const filter=e.target.closest('[data-journey-filter]');
       if(filter){
+        e.preventDefault();
+        e.stopPropagation();
         if(typeof update==='function') update({journeyFilter:filter.dataset.journeyFilter,view:'journey'});
         return;
       }
